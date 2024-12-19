@@ -13,11 +13,13 @@ SOURCES += \
     drone.cpp \
     main.cpp \
     mainwindow.cpp \
+    server.cpp \
     vector2d.cpp
 HEADERS += \
     canvas.h \
     drone.h \
     mainwindow.h \
+    server.h \
     vector2d.h
 
 FORMS += \

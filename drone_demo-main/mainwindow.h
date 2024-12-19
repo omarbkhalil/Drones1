@@ -7,11 +7,12 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <drone.h>
-#include <QListWidget>
 #include <QMap>
 #include <QTimer>
 #include <QElapsedTimer>
+#include <drone.h>
+#include <vector2d.h>
+#include <server.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -31,11 +32,16 @@ private slots:
     void on_actionQuit_triggered();
     void update();
 
+    void on_actionLoad_triggered();
+
 private:
     Ui::MainWindow *ui;
     QMap<QString,Drone*> mapDrones;
     QTimer *timer;
     QElapsedTimer elapsedTimer;
+
+     void loadJsonFile(const QString &filePath); // Method to load and parse JSON file
+      QVector<Server *> servers; // List of servers
 
 };
 #endif // MAINWINDOW_H

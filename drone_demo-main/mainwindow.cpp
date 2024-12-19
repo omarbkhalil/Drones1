@@ -1,6 +1,11 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <QListWidgetItem>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -40,6 +45,84 @@ void MainWindow::on_actionQuit_triggered()
 {
     QApplication::quit();
 }
+void MainWindow::on_actionLoad_triggered() {
+    QString filePath = QFileDialog::getOpenFileName(this, "Open JSON File", "", "JSON Files (*.json)");
+    if (filePath.isEmpty()) return;
+
+    // Clear existing servers and drones
+    for (Server *server : servers) {
+        delete server; // Free memory
+    }
+    servers.clear();
+
+    for (auto &drone : mapDrones) {
+        delete drone; // Free memory for drones
+    }
+    mapDrones.clear();
+    ui->listDronesInfo->clear(); // Clear the UI list of drones
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, "Error", "Cannot open JSON file!");
+        return;
+    }
+
+    QByteArray fileData = file.readAll();
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(fileData);
+
+    if (!jsonDoc.isObject()) {
+        QMessageBox::warning(this, "Error", "Invalid JSON format!");
+        return;
+    }
+
+    QJsonObject jsonObj = jsonDoc.object();
+
+    // Parse servers
+    QJsonArray serversArray = jsonObj["servers"].toArray();
+    for (const QJsonValue &serverVal : serversArray) {
+        QJsonObject serverObj = serverVal.toObject();
+        QString name = serverObj["name"].toString();
+        QString positionStr = serverObj["position"].toString();
+        QString color = serverObj["color"].toString();
+        QStringList posList = positionStr.split(",");
+        if (posList.size() == 2) {
+            Vector2D position(posList[0].toDouble(), posList[1].toDouble());
+            servers.append(new Server(name, position, color)); // Add server to list
+        }
+    }
+
+    ui->widget->setServers(servers); // Pass to Canvas
+
+    // Parse drones
+    QJsonArray dronesArray = jsonObj["drones"].toArray();
+    for (const QJsonValue &droneVal : dronesArray) {
+        QJsonObject droneObj = droneVal.toObject();
+        QString name = droneObj["name"].toString();
+        QString positionStr = droneObj["position"].toString();
+
+        QStringList posList = positionStr.split(",");
+        if (posList.size() == 2) {
+            Vector2D position(posList[0].toDouble(), posList[1].toDouble());
+            mapDrones[name] = new Drone(name);
+            mapDrones[name]->setInitialPosition(position);
+
+            // Add drone to the list UI
+            QListWidgetItem *LWitems = new QListWidgetItem(ui->listDronesInfo);
+            ui->listDronesInfo->addItem(LWitems);
+            ui->listDronesInfo->setItemWidget(LWitems, mapDrones[name]);
+        }
+    }
+
+    ui->widget->setMap(&mapDrones);
+    repaint();
+}
+
+
+
+
+
+
+
 
 void MainWindow::update() {
     static int last=elapsedTimer.elapsed();
@@ -73,3 +156,5 @@ void MainWindow::update() {
     last=current;
     ui->widget->repaint();
 }
+
+
