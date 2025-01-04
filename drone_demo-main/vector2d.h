@@ -14,7 +14,8 @@ public:
     Vector2D(float p_x,float p_y):x(p_x),y(p_y) {};
     Vector2D() { x=y=0.0; }
     Vector2D(Vector2D *p):x(p->x),y(p->y) {};
-
+    void setX(float newX) { x = newX; }
+    void setY(float newY) { y = newY; }
     /**
      * @brief set new coordinates to the vector
      * @param p_x: x component

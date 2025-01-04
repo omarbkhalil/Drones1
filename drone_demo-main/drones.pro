@@ -10,16 +10,20 @@ CONFIG += c++17
 
 SOURCES += \
     canvas.cpp \
+    determinant.cpp \
     drone.cpp \
     main.cpp \
     mainwindow.cpp \
     server.cpp \
+    triangle.cpp \
     vector2d.cpp
 HEADERS += \
     canvas.h \
+    determinant.h \
     drone.h \
     mainwindow.h \
     server.h \
+    triangle.h \
     vector2d.h
 
 FORMS += \

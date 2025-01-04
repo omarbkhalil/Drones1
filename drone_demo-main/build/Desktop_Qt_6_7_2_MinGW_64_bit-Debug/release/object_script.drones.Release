@@ -1,0 +1,11 @@
+release/canvas.o
+release/determinant.o
+release/drone.o
+release/main.o
+release/mainwindow.o
+release/server.o
+release/triangle.o
+release/vector2d.o
+release/moc_canvas.o
+release/moc_drone.o
+release/moc_mainwindow.o
