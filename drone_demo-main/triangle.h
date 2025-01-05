@@ -15,6 +15,7 @@ class Triangle {
     bool isHighlited=false; ///< is drawn highlighted
     bool isDelaunay=true; ///< is drawn as Delaunay triangle
     bool isFlipable=false;
+    QColor color;
     /**
      * @brief Compute the circum circle from the vertices
      */
@@ -67,6 +68,7 @@ public:
         brush.setStyle(Qt::BrushStyle::SolidPattern);
         brush.setColor(p_color);
     }
+    QColor getColor() const { return color; }
 
     inline void setHighlighted(bool v) {
         isHighlited=v;

@@ -39,6 +39,7 @@ private:
     QPair<Vector2D, Vector2D> getBox();
     void reScale();
     void generateTriangles();
+    float scaleFactor = 1.0f;
 
     QVector<Triangle> triangles;
     QVector<Vector2D> vertices;

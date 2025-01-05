@@ -7,17 +7,26 @@
 #include <QJsonObject>
 #include <QDebug>
 
+// Example includes for your classes (adjust if needed)
+// #include "triangle.h"
+// #include "drone.h"
+// #include "server.h"
+// #include "vector2d.h"
+
 Canvas::Canvas(QWidget *parent)
-    : QWidget{parent} {
+    : QWidget(parent)
+{
     droneImg.load("../../media/drone.png");
     setMouseTracking(true);
 }
 
-Canvas::~Canvas() {
+Canvas::~Canvas()
+{
     clear();
 }
 
-void Canvas::clear() {
+void Canvas::clear()
+{
     triangles.clear();
     vertices.clear();
     servers.clear();
@@ -29,7 +38,8 @@ void Canvas::clear() {
     }
 }
 
-void Canvas::addPoints(const QVector<Vector2D> &tab) {
+void Canvas::addPoints(const QVector<Vector2D> &tab)
+{
     for (auto &pt : tab) {
         vertices.push_back(Vector2D(pt));
     }
@@ -38,32 +48,45 @@ void Canvas::addPoints(const QVector<Vector2D> &tab) {
     update();
 }
 
-void Canvas::addTriangle(int id0, int id1, int id2, const QColor &color) {
-    triangles.push_back(Triangle(&vertices[id0], &vertices[id1], &vertices[id2], color));
+void Canvas::addTriangle(int id0, int id1, int id2, const QColor &color)
+{
+    triangles.push_back(Triangle(&vertices[id0],
+                                 &vertices[id1],
+                                 &vertices[id2],
+                                 color));
 }
 
-void Canvas::generateTriangles() {
+void Canvas::generateTriangles()
+{
     triangles.clear();
     int n = vertices.size();
     if (n < 3) return;
 
-    // Simple triangulation logic (could use Delaunay triangulation algorithm here)
+    // Simple triangulation logic (fan triangulation from vertex[0])
     for (int i = 1; i < n - 1; ++i) {
         addTriangle(0, i, i + 1, Qt::red);
     }
 }
 
-QVector<const Vector2D *> Canvas::findOppositePointOfTriangle(Triangle &tri) {
+QVector<const Vector2D *> Canvas::findOppositePointOfTriangle(Triangle &tri)
+{
     QVector<const Vector2D *> list;
     for (auto &otherTri : triangles) {
-        if (tri.hasEdge(otherTri.getVertexPtr(1), otherTri.getVertexPtr(0))) list.append(otherTri.getVertexPtr(2));
-        else if (tri.hasEdge(otherTri.getVertexPtr(2), otherTri.getVertexPtr(1))) list.append(otherTri.getVertexPtr(0));
-        else if (tri.hasEdge(otherTri.getVertexPtr(0), otherTri.getVertexPtr(2))) list.append(otherTri.getVertexPtr(1));
+        if (tri.hasEdge(otherTri.getVertexPtr(1), otherTri.getVertexPtr(0))) {
+            list.append(otherTri.getVertexPtr(2));
+        }
+        else if (tri.hasEdge(otherTri.getVertexPtr(2), otherTri.getVertexPtr(1))) {
+            list.append(otherTri.getVertexPtr(0));
+        }
+        else if (tri.hasEdge(otherTri.getVertexPtr(0), otherTri.getVertexPtr(2))) {
+            list.append(otherTri.getVertexPtr(1));
+        }
     }
     return list;
 }
 
-bool Canvas::checkDelaunay() {
+bool Canvas::checkDelaunay()
+{
     bool areAllDelaunay = true;
     for (auto &triangle : triangles) {
         bool res = triangle.checkDelaunay(vertices);
@@ -71,7 +94,7 @@ bool Canvas::checkDelaunay() {
             auto L = findOppositePointOfTriangle(triangle);
             auto it = L.begin();
             while (it != L.end() && triangle.circleContains(*it)) {
-                it++;
+                ++it;
             }
             qDebug() << L.size() << (it != L.end());
             triangle.setDelaunay(false, it != L.end());
@@ -82,10 +105,11 @@ bool Canvas::checkDelaunay() {
     return areAllDelaunay;
 }
 
-void Canvas::loadMesh(const QString &filePath) {
+void Canvas::loadMesh(const QString &filePath)
+{
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "Unable to open file";
+        qDebug() << "Unable to open file:" << filePath;
         return;
     }
 
@@ -104,8 +128,10 @@ void Canvas::loadMesh(const QString &filePath) {
         QString positionStr = serverObj["position"].toString();
         QStringList posList = positionStr.split(",");
         if (posList.size() == 2) {
-            Vector2D position(posList[0].toDouble(), posList[1].toDouble());
-            servers.append(new Server(name, position, serverObj["color"].toString()));
+            Vector2D position(posList[0].toDouble(),
+                              posList[1].toDouble());
+            servers.append(new Server(name, position,
+                                      serverObj["color"].toString()));
         }
     }
 
@@ -117,7 +143,8 @@ void Canvas::loadMesh(const QString &filePath) {
         QString positionStr = droneObj["position"].toString();
         QStringList posList = positionStr.split(",");
         if (posList.size() == 2) {
-            Vector2D position(posList[0].toDouble(), posList[1].toDouble());
+            Vector2D position(posList[0].toDouble(),
+                              posList[1].toDouble());
             (*mapDrones)[name] = new Drone(name);
             (*mapDrones)[name]->setInitialPosition(position);
         }
@@ -136,38 +163,78 @@ void Canvas::loadMesh(const QString &filePath) {
     update();
 }
 
-void Canvas::paintEvent(QPaintEvent *) {
+void Canvas::paintEvent(QPaintEvent *)
+{
     QPainter painter(this);
-    QBrush whiteBrush(Qt::SolidPattern);
-    QPen penCol(Qt::DashDotDotLine);
-    penCol.setColor(Qt::lightGray);
-    penCol.setWidth(3);
-    whiteBrush.setColor(Qt::white);
-    painter.fillRect(0, 0, width(), height(), whiteBrush);
 
-    // Draw server positions
+    // Fill the background
+    painter.fillRect(rect(), Qt::white);
+
+    // ----- APPLY THE TRANSFORM (IMPORTANT!) -----
+    // This will ensure large or small coordinates
+    // are mapped into the visible area of the widget.
+    painter.translate(10, 10);
+    painter.scale(scaleFactor, scaleFactor);
+    painter.translate(-origin.x, -origin.y);
+
+    // 1) Draw all triangles
+    for (auto &triangle : triangles) {
+        painter.setPen(Qt::NoPen);             // no border
+        painter.setBrush(triangle.getColor()); // triangle fill color
+
+        QPolygonF poly;
+        poly << QPointF(triangle.getVertexPtr(0)->x,
+                        triangle.getVertexPtr(0)->y)
+             << QPointF(triangle.getVertexPtr(1)->x,
+                        triangle.getVertexPtr(1)->y)
+             << QPointF(triangle.getVertexPtr(2)->x,
+                        triangle.getVertexPtr(2)->y);
+
+        painter.drawPolygon(poly);
+    }
+
+    // 2) Draw servers
     QPen serverPen(Qt::blue);
     serverPen.setWidth(5);
     painter.setPen(serverPen);
 
-    for (const Server *server : servers) { // Use Server objects instead of just positions
-        // Draw server position
-        painter.drawEllipse(QPointF(server->getPosition().x, server->getPosition().y), 5, 5);
+    for (const Server *server : servers) {
+        // Draw server position (ellipse)
+        painter.drawEllipse(QPointF(server->getPosition().x,
+                                    server->getPosition().y),
+                            5, 5);
 
         // Draw server name near position
-        painter.setPen(Qt::black); // Set black pen for text
-        painter.drawText(QPointF(server->getPosition().x + 10, server->getPosition().y - 10), server->getName());
+        painter.setPen(Qt::black); // text in black
+        painter.drawText(QPointF(server->getPosition().x + 10,
+                                 server->getPosition().y - 10),
+                         server->getName());
+
+        // Optionally restore the pen (blue) for next server
+        painter.setPen(serverPen);
     }
 
-    // Draw drones
+    // 3) Draw drones
     if (mapDrones) {
-        QRect rect(-droneIconSize / 2, -droneIconSize / 2, droneIconSize, droneIconSize);
-        QRect rectCol(-droneCollisionDistance / 2, -droneCollisionDistance / 2, droneCollisionDistance, droneCollisionDistance);
+        QPen penCol(Qt::DashDotDotLine);
+        penCol.setColor(Qt::lightGray);
+        penCol.setWidth(3);
+
+        // Icon rectangles
+        QRect rect(-droneIconSize / 2,
+                   -droneIconSize / 2,
+                   droneIconSize, droneIconSize);
+
+        QRect rectCol(-droneCollisionDistance / 2,
+                      -droneCollisionDistance / 2,
+                      droneCollisionDistance, droneCollisionDistance);
 
         for (auto &drone : *mapDrones) {
             painter.save();
-            // Place and orient the drone
-            painter.translate(drone->getPosition().x, drone->getPosition().y);
+
+            // Translate and rotate to drone’s position & azimuth
+            painter.translate(drone->getPosition().x,
+                              drone->getPosition().y);
             painter.rotate(drone->getAzimut());
             painter.drawImage(rect, droneImg);
 
@@ -175,11 +242,23 @@ void Canvas::paintEvent(QPaintEvent *) {
             if (drone->getStatus() != Drone::landed) {
                 painter.setPen(Qt::NoPen);
                 painter.setBrush(Qt::red);
-                painter.drawEllipse((-185.0 / 511.0) * droneIconSize, (-185.0 / 511.0) * droneIconSize, (65.0 / 511.0) * droneIconSize, (65.0 / 511.0) * droneIconSize);
-                painter.drawEllipse((115.0 / 511.0) * droneIconSize, (-185.0 / 511.0) * droneIconSize, (65.0 / 511.0) * droneIconSize, (65.0 / 511.0) * droneIconSize);
+                painter.drawEllipse((-185.0f / 511.0f) * droneIconSize,
+                                    (-185.0f / 511.0f) * droneIconSize,
+                                    (65.0f / 511.0f) * droneIconSize,
+                                    (65.0f / 511.0f) * droneIconSize);
+                painter.drawEllipse((115.0f / 511.0f) * droneIconSize,
+                                    (-185.0f / 511.0f) * droneIconSize,
+                                    (65.0f / 511.0f) * droneIconSize,
+                                    (65.0f / 511.0f) * droneIconSize);
                 painter.setBrush(Qt::green);
-                painter.drawEllipse((-185.0 / 511.0) * droneIconSize, (115.0 / 511.0) * droneIconSize, (70.0 / 511.0) * droneIconSize, (70.0 / 511.0) * droneIconSize);
-                painter.drawEllipse((115.0 / 511.0) * droneIconSize, (115.0 / 511.0) * droneIconSize, (70.0 / 511.0) * droneIconSize, (70.0 / 511.0) * droneIconSize);
+                painter.drawEllipse((-185.0f / 511.0f) * droneIconSize,
+                                    (115.0f / 511.0f) * droneIconSize,
+                                    (70.0f / 511.0f) * droneIconSize,
+                                    (70.0f / 511.0f) * droneIconSize);
+                painter.drawEllipse((115.0f / 511.0f) * droneIconSize,
+                                    (115.0f / 511.0f) * droneIconSize,
+                                    (70.0f / 511.0f) * droneIconSize,
+                                    (70.0f / 511.0f) * droneIconSize);
             }
 
             // Draw collision detector
@@ -188,58 +267,77 @@ void Canvas::paintEvent(QPaintEvent *) {
                 painter.setBrush(Qt::NoBrush);
                 painter.drawEllipse(rectCol);
             }
+
             painter.restore();
         }
     }
 }
 
-void Canvas::resizeEvent(QResizeEvent *) {
+void Canvas::resizeEvent(QResizeEvent *)
+{
     reScale();
     update();
 }
 
-void Canvas::reScale() {
+void Canvas::reScale()
+{
+    if (vertices.isEmpty()) return;
+
     int newWidth = width() - 20;
     int newHeight = height() - 20;
-    if (vertices.isEmpty()) return;
 
     auto box = getBox();
     float dataWidth = box.second.x - box.first.x;
     float dataHeight = box.second.y - box.first.y;
-    scale = qMin(float(newWidth) / dataWidth, float(newHeight) / dataHeight);
+
+    // Use a float member called scaleFactor, not scale()
+    scaleFactor = qMin(float(newWidth) / dataWidth,
+                       float(newHeight) / dataHeight);
+
     origin.setX(box.first.x);
     origin.setY(box.first.y);
 }
 
-QPair<Vector2D, Vector2D> Canvas::getBox() {
+QPair<Vector2D, Vector2D> Canvas::getBox()
+{
     if (vertices.isEmpty()) {
-        return {Vector2D(0, 0), Vector2D(200, 200)};
+        // Default bounding box if no data
+        return { Vector2D(0, 0), Vector2D(200, 200) };
     }
+
     Vector2D infLeft = vertices.first();
     Vector2D supRight = vertices.first();
+
     for (const auto &v : vertices) {
-        if (v.x < infLeft.x) infLeft.x = v.x;
-        if (v.y < infLeft.y) infLeft.y = v.y;
+        if (v.x < infLeft.x)  infLeft.x = v.x;
+        if (v.y < infLeft.y)  infLeft.y = v.y;
         if (v.x > supRight.x) supRight.x = v.x;
         if (v.y > supRight.y) supRight.y = v.y;
     }
-    return {infLeft, supRight};
+    return { infLeft, supRight };
 }
 
-void Canvas::mousePressEvent(QMouseEvent *event) {
-    // Ensure proper usage of QMouseEvent methods
-    if (!event) return; // Safety check for null pointers
+void Canvas::mousePressEvent(QMouseEvent *event)
+{
+    if (!event) return; // Safety check
 
-    // Search for a drone that is landed
+    // Search for a landed drone
     auto it = mapDrones->begin();
-    while (it != mapDrones->end() && (*it)->getStatus() != Drone::landed) {
+    while (it != mapDrones->end() &&
+           (*it)->getStatus() != Drone::landed)
+    {
         ++it;
     }
 
-    // If found, ask for a motion to the mouse position
+    // If found, set the goal position to where user clicked
     if (it != mapDrones->end()) {
-        (*it)->setGoalPosition(Vector2D(event->pos().x(), event->pos().y()));
+        // If you want to map from screen coords to data coords,
+        // you might need to reverse the transform (depending on your usage).
+        // For now, let's just set it as raw widget coordinates:
+        (*it)->setGoalPosition(Vector2D(event->pos().x(),
+                                        event->pos().y()));
         (*it)->start();
     }
-    repaint();
+
+    update(); // or repaint(), but update() is usually recommended
 }
