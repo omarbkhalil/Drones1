@@ -85,7 +85,14 @@
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
+   <widget class="QMenu" name="menuDelaunay">
+    <property name="title">
+     <string>compute</string>
+    </property>
+    <addaction name="actionTriangles"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuDelaunay"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionLoad">
@@ -99,6 +106,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actionTriangles">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Triangles</string>
    </property>
   </action>
  </widget>

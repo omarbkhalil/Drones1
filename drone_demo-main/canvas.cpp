@@ -38,11 +38,12 @@ void Canvas::clear()
     }
 }
 
-void Canvas::addPoints(const QVector<Vector2D> &tab)
-{
-    for (auto &pt : tab) {
+void Canvas::addPoints(const QVector<Vector2D> &tab) {
+    for (const auto &pt : tab) {
         vertices.push_back(Vector2D(pt));
+        qDebug() << "Added vertex:" << pt.x << pt.y; // Debug statement
     }
+    qDebug() << "Total vertices after addition:" << vertices.size(); // Debug statement
     generateTriangles();
     reScale();
     update();
@@ -65,7 +66,9 @@ void Canvas::generateTriangles()
     // Simple triangulation logic (fan triangulation from vertex[0])
     for (int i = 1; i < n - 1; ++i) {
         addTriangle(0, i, i + 1, Qt::red);
+
     }
+
 }
 
 QVector<const Vector2D *> Canvas::findOppositePointOfTriangle(Triangle &tri)
@@ -134,6 +137,7 @@ void Canvas::loadMesh(const QString &filePath)
                                       serverObj["color"].toString()));
         }
     }
+    qDebug() << "Number of servers loaded:" << servers.size(); // Debug statement
 
     // Parse drones
     QJsonArray dronesArray = jsonObj["drones"].toArray();
@@ -149,6 +153,7 @@ void Canvas::loadMesh(const QString &filePath)
             (*mapDrones)[name]->setInitialPosition(position);
         }
     }
+    qDebug() << "Number of drones loaded:" << mapDrones->size(); // Debug statement
 
     // Add all positions to vertices for triangulation
     for (const auto &server : servers) {
@@ -157,10 +162,13 @@ void Canvas::loadMesh(const QString &filePath)
     for (const auto &drone : *mapDrones) {
         vertices.append(drone->getPosition());
     }
+    qDebug() << "Total vertices before triangulation:" << vertices.size(); // Debug statement
 
     generateTriangles();
+
     reScale();
     update();
+
 }
 
 void Canvas::paintEvent(QPaintEvent *)
@@ -179,18 +187,14 @@ void Canvas::paintEvent(QPaintEvent *)
 
     // 1) Draw all triangles
     for (auto &triangle : triangles) {
-        painter.setPen(Qt::NoPen);             // no border
-        painter.setBrush(triangle.getColor()); // triangle fill color
-
+        painter.setPen(QPen(Qt::black, 2));
+        painter.setBrush(QColor(255, 0, 0, 128));
         QPolygonF poly;
-        poly << QPointF(triangle.getVertexPtr(0)->x,
-                        triangle.getVertexPtr(0)->y)
-             << QPointF(triangle.getVertexPtr(1)->x,
-                        triangle.getVertexPtr(1)->y)
-             << QPointF(triangle.getVertexPtr(2)->x,
-                        triangle.getVertexPtr(2)->y);
-
+        poly << QPointF(triangle.getVertexPtr(0)->x, triangle.getVertexPtr(0)->y)
+             << QPointF(triangle.getVertexPtr(1)->x, triangle.getVertexPtr(1)->y)
+             << QPointF(triangle.getVertexPtr(2)->x, triangle.getVertexPtr(2)->y);
         painter.drawPolygon(poly);
+
     }
 
     // 2) Draw servers
@@ -271,6 +275,7 @@ void Canvas::paintEvent(QPaintEvent *)
             painter.restore();
         }
     }
+
 }
 
 void Canvas::resizeEvent(QResizeEvent *)

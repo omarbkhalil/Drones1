@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->actionTriangles->setChecked(ui->widget->showTriangles);
 
     /* preset initial positions of the drones */
     const QVector<Vector2D> tabPos={{60,80},{400,700},{50,250},{800,800},{700,50}};
@@ -45,6 +46,14 @@ void MainWindow::on_actionQuit_triggered()
 {
     QApplication::quit();
 }
+
+void MainWindow::on_actionTriangles_triggered(bool checked) {
+    ui->widget->showTriangles = checked;
+    update();
+}
+
+
+
 void MainWindow::on_actionLoad_triggered() {
     QString filePath = QFileDialog::getOpenFileName(this, "Open JSON File", "", "JSON Files (*.json)");
     if (filePath.isEmpty()) return;

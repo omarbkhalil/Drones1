@@ -30,6 +30,7 @@ class Ui_MainWindow
 public:
     QAction *actionLoad;
     QAction *actionQuit;
+    QAction *actionTriangles;
     QWidget *centralwidget;
     QHBoxLayout *horizontalLayout;
     Canvas *widget;
@@ -38,6 +39,7 @@ public:
     QListWidget *listDronesInfo;
     QMenuBar *menubar;
     QMenu *menuFile;
+    QMenu *menuDelaunay;
     QStatusBar *statusbar;
 
     void setupUi(QMainWindow *MainWindow)
@@ -49,6 +51,9 @@ public:
         actionLoad->setObjectName("actionLoad");
         actionQuit = new QAction(MainWindow);
         actionQuit->setObjectName("actionQuit");
+        actionTriangles = new QAction(MainWindow);
+        actionTriangles->setObjectName("actionTriangles");
+        actionTriangles->setCheckable(true);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName("centralwidget");
         horizontalLayout = new QHBoxLayout(centralwidget);
@@ -89,15 +94,19 @@ public:
         menubar->setGeometry(QRect(0, 0, 1268, 21));
         menuFile = new QMenu(menubar);
         menuFile->setObjectName("menuFile");
+        menuDelaunay = new QMenu(menubar);
+        menuDelaunay->setObjectName("menuDelaunay");
         MainWindow->setMenuBar(menubar);
         statusbar = new QStatusBar(MainWindow);
         statusbar->setObjectName("statusbar");
         MainWindow->setStatusBar(statusbar);
 
         menubar->addAction(menuFile->menuAction());
+        menubar->addAction(menuDelaunay->menuAction());
         menuFile->addAction(actionLoad);
         menuFile->addSeparator();
         menuFile->addAction(actionQuit);
+        menuDelaunay->addAction(actionTriangles);
 
         retranslateUi(MainWindow);
 
@@ -112,8 +121,10 @@ public:
 #if QT_CONFIG(shortcut)
         actionQuit->setShortcut(QCoreApplication::translate("MainWindow", "Ctrl+Q", nullptr));
 #endif // QT_CONFIG(shortcut)
+        actionTriangles->setText(QCoreApplication::translate("MainWindow", "Triangles", nullptr));
         label->setText(QCoreApplication::translate("MainWindow", "Drone list:", nullptr));
         menuFile->setTitle(QCoreApplication::translate("MainWindow", "File", nullptr));
+        menuDelaunay->setTitle(QCoreApplication::translate("MainWindow", "compute", nullptr));
     } // retranslateUi
 
 };

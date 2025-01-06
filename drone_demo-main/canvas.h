@@ -29,7 +29,7 @@ public:
     void addPoints(const QVector<Vector2D> &tab);
     void loadMesh(const QString &filePath);
     QVector<const Vector2D *> findOppositePointOfTriangle(Triangle &tri);
-
+    bool showTriangles=true;
 protected:
     void paintEvent(QPaintEvent *) override;
     void mousePressEvent(QMouseEvent *event) override;

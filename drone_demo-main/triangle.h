@@ -65,10 +65,14 @@ public:
     void drawCircle(QPainter &painter);
 
     void setColor(const QColor &p_color) {
-        brush.setStyle(Qt::BrushStyle::SolidPattern);
+        color = p_color; // make sure we store the color
         brush.setColor(p_color);
+        brush.setStyle(Qt::SolidPattern);
     }
-    QColor getColor() const { return color; }
+    QColor getColor() const {
+        return color;
+    }
+
 
     inline void setHighlighted(bool v) {
         isHighlited=v;
