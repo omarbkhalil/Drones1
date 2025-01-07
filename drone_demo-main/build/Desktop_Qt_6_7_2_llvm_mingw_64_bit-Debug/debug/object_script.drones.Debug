@@ -1,0 +1,11 @@
+debug/canvas.o
+debug/determinant.o
+debug/drone.o
+debug/main.o
+debug/mainwindow.o
+debug/server.o
+debug/triangle.o
+debug/vector2d.o
+debug/moc_canvas.o
+debug/moc_drone.o
+debug/moc_mainwindow.o
