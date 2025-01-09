@@ -1,4 +1,6 @@
 #include "triangle.h"
+#include <iostream>
+#include <ostream>
 
 void Triangle::computeCircle() {
     auto A=ptr[0];
@@ -15,18 +17,23 @@ void Triangle::computeCircle() {
 }
 
 void Triangle::draw(QPainter &painter) {
+    std::cout << "Drawing triangle at vertices: "
+              << ptr[0]->x << ", " << ptr[0]->y << " - "
+              << ptr[1]->x << ", " << ptr[1]->y << " - "
+              << ptr[2]->x << ", " << ptr[2]->y << std::endl;
+
     QPen pen(Qt::black);
     pen.setWidth(3);
     painter.setPen(pen);
-    // painter.setBrush(isHighlited?Qt::yellow:(isDelaunay?Qt::green:Qt::red));
-    painter.setBrush(isDelaunay?Qt::gray:(isFlipable?Qt::blue : Qt::yellow));
+    painter.setBrush(QColor(0, 255, 0)); // Bright green for high visibility
     QPointF points[3];
-    for (int i=0; i<3; i++) {
-        points[i].setX(ptr[i]->x);
-        points[i].setY(ptr[i]->y);
+    for (int i = 0; i < 3; i++) {
+        points[i] = QPointF(ptr[i]->x, ptr[i]->y);
     }
-    painter.drawPolygon(points,3);
+    painter.drawPolygon(points, 3);
 }
+
+
 
 void Triangle::drawCircle(QPainter &painter) {
     painter.setPen(QPen(Qt::black,3,Qt::DashLine));

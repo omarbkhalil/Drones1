@@ -15,6 +15,7 @@ class Canvas : public QWidget {
 public:
     const int droneIconSize = 64; ///< size of the drone picture in the canvas
     const double droneCollisionDistance = droneIconSize * 1.5; ///< distance to detect collision with other drone
+    QVector<Vector2D> triangleVertices; // Add this to store triangle points
 
     explicit Canvas(QWidget *parent = nullptr);
     ~Canvas();
@@ -22,13 +23,16 @@ public:
     void setMap(QMap<QString, Drone *> *map) { mapDrones = map; }
     void setServerPositions(const QVector<Vector2D> &positions) { serverPositions = positions; }
     void setServers(const QVector<Server *> &serverList) { servers = serverList; }
-    void addTriangle(int id0, int id1, int id2, const QColor &color = Qt::gray);
+    void addTriangle(int id0, int id1, int id2, const QColor &color) ;
+    void addTriangle(const Vector2D &v1, const Vector2D &v2, const Vector2D &v3, const QColor &color) ;
     bool checkDelaunay();
     void clearTriangles();
+    void generateSimpleTriangles() ;
     void clear();
     void addPoints(const QVector<Vector2D> &tab);
     void loadMesh(const QString &filePath);
     QVector<const Vector2D *> findOppositePointOfTriangle(Triangle &tri);
+    Server* findServerByName(const QString& name) ;
     bool showTriangles=true;
 protected:
     void paintEvent(QPaintEvent *) override;
