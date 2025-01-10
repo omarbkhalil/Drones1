@@ -30,7 +30,6 @@ class Ui_MainWindow
 public:
     QAction *actionLoad;
     QAction *actionQuit;
-    QAction *actionTriangles;
     QWidget *centralwidget;
     QHBoxLayout *horizontalLayout;
     Canvas *widget;
@@ -51,9 +50,6 @@ public:
         actionLoad->setObjectName("actionLoad");
         actionQuit = new QAction(MainWindow);
         actionQuit->setObjectName("actionQuit");
-        actionTriangles = new QAction(MainWindow);
-        actionTriangles->setObjectName("actionTriangles");
-        actionTriangles->setCheckable(true);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName("centralwidget");
         horizontalLayout = new QHBoxLayout(centralwidget);
@@ -91,7 +87,7 @@ public:
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
-        menubar->setGeometry(QRect(0, 0, 1268, 21));
+        menubar->setGeometry(QRect(0, 0, 1268, 17));
         menuFile = new QMenu(menubar);
         menuFile->setObjectName("menuFile");
         menuDelaunay = new QMenu(menubar);
@@ -106,7 +102,6 @@ public:
         menuFile->addAction(actionLoad);
         menuFile->addSeparator();
         menuFile->addAction(actionQuit);
-        menuDelaunay->addAction(actionTriangles);
 
         retranslateUi(MainWindow);
 
@@ -121,7 +116,6 @@ public:
 #if QT_CONFIG(shortcut)
         actionQuit->setShortcut(QCoreApplication::translate("MainWindow", "Ctrl+Q", nullptr));
 #endif // QT_CONFIG(shortcut)
-        actionTriangles->setText(QCoreApplication::translate("MainWindow", "Triangles", nullptr));
         label->setText(QCoreApplication::translate("MainWindow", "Drone list:", nullptr));
         menuFile->setTitle(QCoreApplication::translate("MainWindow", "File", nullptr));
         menuDelaunay->setTitle(QCoreApplication::translate("MainWindow", "compute", nullptr));

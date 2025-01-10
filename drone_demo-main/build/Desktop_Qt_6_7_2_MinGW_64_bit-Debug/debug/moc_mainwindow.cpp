@@ -106,7 +106,7 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         switch (_id) {
         case 0: _t->on_actionQuit_triggered(); break;
         case 1: _t->update(); break;
-        case 2: _t->on_actionTriangles_triggered((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
+     //   case 2: _t->on_actionTriangles_triggered((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
         case 3: _t->on_actionLoad_triggered(); break;
         default: ;
         }

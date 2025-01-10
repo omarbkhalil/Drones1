@@ -49,19 +49,15 @@ void Canvas::addPoints(const QVector<Vector2D> &tab) {
     update();
 }
 
+void Canvas::addTriangle(int id0, int id1, int id2) {
+    triangles.push_back(Triangle(&vertices[id0],&vertices[id1],&vertices[id2]));
+}
+
+void Canvas::addTriangle(int id0, int id1, int id2,const QColor &color) {
+    triangles.push_back(Triangle(&vertices[id0],&vertices[id1],&vertices[id2],color));
+}
 void Canvas::addTriangle(const Vector2D &v1, const Vector2D &v2, const Vector2D &v3, const QColor &color) {
     triangles.push_back(Triangle(new Vector2D(v1), new Vector2D(v2), new Vector2D(v3), color));
-}
-void Canvas::addTriangle(int id0, int id1, int id2, const QColor &color) {
-    // Ensure the indices are valid
-    if (id0 < vertices.size() && id1 < vertices.size() && id2 < vertices.size()) {
-        Vector2D *ptr1 = &vertices[id0];
-        Vector2D *ptr2 = &vertices[id1];
-        Vector2D *ptr3 = &vertices[id2];
-        triangles.push_back(Triangle(ptr1, ptr2, ptr3, color)); // Add the triangle to the list
-    } else {
-        qDebug() << "Invalid indices for addTriangle:" << id0 << id1 << id2;
-    }
 }
 
 
@@ -137,7 +133,7 @@ void Canvas::generateSimpleTriangles() {
 
 }
 
-void Canvas::loadMesh(const QString &filePath)
+/* void Canvas::loadMesh(const QString &filePath)
 {
     std::cout << "loadMesh called with file: " << filePath.toStdString() << std::endl;
 
@@ -152,9 +148,13 @@ void Canvas::loadMesh(const QString &filePath)
     QByteArray fileData = file.readAll();
     QJsonDocument jsonDoc = QJsonDocument::fromJson(fileData);
     QJsonObject jsonObj = jsonDoc.object();
+    file.close();
 
     // Parse servers
     QJsonArray serversArray = jsonObj["servers"].toArray();
+    QVector<Server*> servers;  // Make sure this is defined somewhere appropriate
+int triangleCount = 0;
+
     for (const QJsonValue &serverVal : serversArray) {
         QJsonObject serverObj = serverVal.toObject();
         QString name = serverObj["name"].toString();
@@ -165,6 +165,22 @@ void Canvas::loadMesh(const QString &filePath)
             servers.append(new Server(name, position, serverObj["color"].toString()));
         }
     }
+
+    // Assuming you have at least three servers and servers.size() % 3 == 0
+    for (int i = 0; i + 2 < servers.size(); i += 3) {
+        Vector2D v0 = servers[i]->getPosition();
+        Vector2D v1 = servers[i+1]->getPosition();
+        Vector2D v2 = servers[i+2]->getPosition();
+
+        // Assuming the color of the triangle can be the color of the first server or any logic you prefer
+        QString triColorStr = servers[i]->getColor();
+        QColor triColor(triColorStr.isEmpty() ? "#FFFF00" : triColorStr);
+
+        // Add triangle to your vector or list
+        triangles.append(Triangle(&v0, &v1, &v2, triColor));
+        triangleCount++;  // Increment the triangle count
+         }
+
 
     // Parse drones
     QJsonArray dronesArray = jsonObj["drones"].toArray();
@@ -179,34 +195,15 @@ void Canvas::loadMesh(const QString &filePath)
             (*mapDrones)[name]->setInitialPosition(position);
         }
     }
- QVector<Vector2D> trianglePoints;  // Declare `trianglePoints` here
-    // Parse points for triangle
-    QJsonArray pointsArray = jsonObj["points"].toArray();
-    triangleVertices.clear(); // Clear any existing points
-    for (const QJsonValue &pointVal : pointsArray) {
-        QJsonObject pointObj = pointVal.toObject();
-        double x = pointObj["x"].toDouble();
-        double y = pointObj["y"].toDouble();
-        triangleVertices.append(Vector2D(x, y));
-    }
 
 
-    // Assuming you use these points directly to create a specific triangle
-    // Use this pattern where the triangle is being added
-    if (trianglePoints.size() >= 3) {
-        addTriangle(trianglePoints[0], trianglePoints[1], trianglePoints[2], QColor(0, 255, 0)); // Example color
-    }
 
-
-    qDebug() << "Number of servers loaded:" << servers.size();
-    qDebug() << "Number of drones loaded:" << mapDrones->size();
-    qDebug() << "Total vertices before triangulation:" << vertices.size();
-
-    generateTriangles();
+    // 6) Re-scale and update
     reScale();
     update();
 }
 
+*/
 
 void Canvas::paintEvent(QPaintEvent *)
 {
@@ -225,18 +222,8 @@ void Canvas::paintEvent(QPaintEvent *)
     painter.scale(scaleFactor, scaleFactor);
     painter.translate(-origin.x, -origin.y);
 
-    // 1) Draw all triangles
-    // Setup painter with basic transformation if necessary
-    if (triangleVertices.size() >= 3) {
-        painter.setPen(QPen(Qt::blue, 3)); // Use a thick blue pen for visibility
-
-        // Draw triangle using points from triangleVertices
-        painter.drawLine(QPointF(triangleVertices[0].x, triangleVertices[0].y),
-                         QPointF(triangleVertices[1].x, triangleVertices[1].y));
-        painter.drawLine(QPointF(triangleVertices[1].x, triangleVertices[1].y),
-                         QPointF(triangleVertices[2].x, triangleVertices[2].y));
-        painter.drawLine(QPointF(triangleVertices[2].x, triangleVertices[2].y),
-                         QPointF(triangleVertices[0].x, triangleVertices[0].y));
+    for (auto &tri : triangles) {
+        tri.draw(painter);
     }
 
 

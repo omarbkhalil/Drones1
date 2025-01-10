@@ -23,7 +23,11 @@ public:
     void setMap(QMap<QString, Drone *> *map) { mapDrones = map; }
     void setServerPositions(const QVector<Vector2D> &positions) { serverPositions = positions; }
     void setServers(const QVector<Server *> &serverList) { servers = serverList; }
+    inline int getSizeofV() { return vertices.size();}
+    inline int getSizeofT() { return triangles.size();}
     void addTriangle(int id0, int id1, int id2, const QColor &color) ;
+
+    void addTriangle(int id0, int id1, int id2) ;
     void addTriangle(const Vector2D &v1, const Vector2D &v2, const Vector2D &v3, const QColor &color) ;
     bool checkDelaunay();
     void clearTriangles();

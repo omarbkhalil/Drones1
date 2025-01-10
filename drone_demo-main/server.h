@@ -9,7 +9,8 @@ class Server {
 public:
     Server(const QString &name, const Vector2D &position, const QString &color)
         : name(name), position(position), color(color) {}
-
+ int vertexId;
+    QString color;
     // Getters
     QString getName() const { return name; }
     Vector2D getPosition() const { return position; }
@@ -25,7 +26,7 @@ public:
 private:
     QString name;                 ///< Name of the server
     Vector2D position;            ///< Position of the server
-    QString color;                ///< Color of the server
+                   ///< Color of the server
 
 };
 
