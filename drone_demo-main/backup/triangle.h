@@ -15,7 +15,6 @@ class Triangle {
     bool isHighlited=false; ///< is drawn highlighted
     bool isDelaunay=true; ///< is drawn as Delaunay triangle
     bool isFlipable=false;
-    QColor color;
     /**
      * @brief Compute the circum circle from the vertices
      */
@@ -60,6 +59,7 @@ public:
                isOnTheLeft(&P,ptr[1],ptr[2]) &&
                isOnTheLeft(&P,ptr[2],ptr[0]);
     }
+    QColor color;
 
     void draw(QPainter &painter);
     void drawCircle(QPainter &painter);
@@ -90,6 +90,16 @@ public:
         isDelaunay=v;
         isFlipable=f;
     }
+    void drawEdges(QPainter &painter) {
+        QPen pen(Qt::black, 2); // Set the pen width and color
+        painter.setPen(pen);
+
+        // Draw each edge of the triangle
+        painter.drawLine(QPointF(ptr[0]->x, ptr[0]->y), QPointF(ptr[1]->x, ptr[1]->y));
+        painter.drawLine(QPointF(ptr[1]->x, ptr[1]->y), QPointF(ptr[2]->x, ptr[2]->y));
+        painter.drawLine(QPointF(ptr[2]->x, ptr[2]->y), QPointF(ptr[0]->x, ptr[0]->y));
+    }
+
     bool checkDelaunay(const QVector<Vector2D>&tabVertices) {
         auto it=tabVertices.begin();
         bool isOk = true;

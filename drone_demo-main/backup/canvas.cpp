@@ -6,6 +6,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QDebug>
+#include <iostream>
 
 // Example includes for your classes (adjust if needed)
 // #include "triangle.h"
@@ -43,33 +44,39 @@ void Canvas::addPoints(const QVector<Vector2D> &tab) {
         vertices.push_back(Vector2D(pt));
         qDebug() << "Added vertex:" << pt.x << pt.y; // Debug statement
     }
-    qDebug() << "Total vertices after addition:" << vertices.size(); // Debug statement
-    generateTriangles();
+    std::cout << "Total vertices after addition: " << vertices.size() << std::endl;
     reScale();
     update();
 }
 
-void Canvas::addTriangle(int id0, int id1, int id2, const QColor &color)
-{
-    triangles.push_back(Triangle(&vertices[id0],
-                                 &vertices[id1],
-                                 &vertices[id2],
-                                 color));
+void Canvas::addTriangle(int id0, int id1, int id2) {
+    triangles.push_back(Triangle(&vertices[id0],&vertices[id1],&vertices[id2]));
 }
 
-void Canvas::generateTriangles()
-{
+void Canvas::addTriangle(int id0, int id1, int id2,const QColor &color) {
+    triangles.push_back(Triangle(&vertices[id0],&vertices[id1],&vertices[id2],color));
+}
+void Canvas::addTriangle(const Vector2D &v1, const Vector2D &v2, const Vector2D &v3, const QColor &color) {
+    triangles.push_back(Triangle(new Vector2D(v1), new Vector2D(v2), new Vector2D(v3), color));
+}
+
+
+void Canvas::generateTriangles() {
     triangles.clear();
     int n = vertices.size();
     if (n < 3) return;
 
-    // Simple triangulation logic (fan triangulation from vertex[0])
+    // Simple fan triangulation from vertex[0]
     for (int i = 1; i < n - 1; ++i) {
-        addTriangle(0, i, i + 1, Qt::red);
-
+        Vector2D *v0 = &vertices[0];
+        Vector2D *v1 = &vertices[i];
+        Vector2D *v2 = &vertices[i + 1];
+        triangles.push_back(Triangle(v0, v1, v2, Qt::red)); // Directly create and add the triangle
     }
-
 }
+
+
+
 
 QVector<const Vector2D *> Canvas::findOppositePointOfTriangle(Triangle &tri)
 {
@@ -99,7 +106,7 @@ bool Canvas::checkDelaunay()
             while (it != L.end() && triangle.circleContains(*it)) {
                 ++it;
             }
-            qDebug() << L.size() << (it != L.end());
+            std::cout << "L size: " << L.size() << ", Iterator at end: " << (it != L.end() ? "No" : "Yes") << std::endl;
             triangle.setDelaunay(false, it != L.end());
         }
         areAllDelaunay = res && areAllDelaunay;
@@ -108,11 +115,31 @@ bool Canvas::checkDelaunay()
     return areAllDelaunay;
 }
 
-void Canvas::loadMesh(const QString &filePath)
+void Canvas::generateSimpleTriangles() {
+    triangles.clear();
+    if (vertices.size() < 3) return; // Need at least three vertices
+
+    const Vector2D& central = vertices[0]; // Choosing the first vertex as central
+    for (int i = 1; i < vertices.size() - 1; ++i) {
+        addTriangle(0, i, i + 1, Qt::red); // Add triangle between central, i, and i+1
+    }
+    std::cout << "Triangles added: " << triangles.size() << std::endl;
+    for (const auto& tri : triangles) {
+        auto p0 = tri.getVertexPtr(0);
+        auto p1 = tri.getVertexPtr(1);
+        auto p2 = tri.getVertexPtr(2);
+        std::cout << "Triangle vertices: (" << p0->x << ", " << p0->y << ") (" << p1->x << ", " << p1->y << ") (" << p2->x << ", " << p2->y << ")\n";
+    }
+
+}
+
+/* void Canvas::loadMesh(const QString &filePath)
 {
+    std::cout << "loadMesh called with file: " << filePath.toStdString() << std::endl;
+
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "Unable to open file:" << filePath;
+        std::cout << "Unable to open file: " << filePath.toStdString() << std::endl;
         return;
     }
 
@@ -120,24 +147,40 @@ void Canvas::loadMesh(const QString &filePath)
 
     QByteArray fileData = file.readAll();
     QJsonDocument jsonDoc = QJsonDocument::fromJson(fileData);
-
     QJsonObject jsonObj = jsonDoc.object();
+    file.close();
 
     // Parse servers
     QJsonArray serversArray = jsonObj["servers"].toArray();
+    QVector<Server*> servers;  // Make sure this is defined somewhere appropriate
+int triangleCount = 0;
+
     for (const QJsonValue &serverVal : serversArray) {
         QJsonObject serverObj = serverVal.toObject();
         QString name = serverObj["name"].toString();
         QString positionStr = serverObj["position"].toString();
         QStringList posList = positionStr.split(",");
         if (posList.size() == 2) {
-            Vector2D position(posList[0].toDouble(),
-                              posList[1].toDouble());
-            servers.append(new Server(name, position,
-                                      serverObj["color"].toString()));
+            Vector2D position(posList[0].toDouble(), posList[1].toDouble());
+            servers.append(new Server(name, position, serverObj["color"].toString()));
         }
     }
-    qDebug() << "Number of servers loaded:" << servers.size(); // Debug statement
+
+    // Assuming you have at least three servers and servers.size() % 3 == 0
+    for (int i = 0; i + 2 < servers.size(); i += 3) {
+        Vector2D v0 = servers[i]->getPosition();
+        Vector2D v1 = servers[i+1]->getPosition();
+        Vector2D v2 = servers[i+2]->getPosition();
+
+        // Assuming the color of the triangle can be the color of the first server or any logic you prefer
+        QString triColorStr = servers[i]->getColor();
+        QColor triColor(triColorStr.isEmpty() ? "#FFFF00" : triColorStr);
+
+        // Add triangle to your vector or list
+        triangles.append(Triangle(&v0, &v1, &v2, triColor));
+        triangleCount++;  // Increment the triangle count
+         }
+
 
     // Parse drones
     QJsonArray dronesArray = jsonObj["drones"].toArray();
@@ -147,29 +190,20 @@ void Canvas::loadMesh(const QString &filePath)
         QString positionStr = droneObj["position"].toString();
         QStringList posList = positionStr.split(",");
         if (posList.size() == 2) {
-            Vector2D position(posList[0].toDouble(),
-                              posList[1].toDouble());
+            Vector2D position(posList[0].toDouble(), posList[1].toDouble());
             (*mapDrones)[name] = new Drone(name);
             (*mapDrones)[name]->setInitialPosition(position);
         }
     }
-    qDebug() << "Number of drones loaded:" << mapDrones->size(); // Debug statement
 
-    // Add all positions to vertices for triangulation
-    for (const auto &server : servers) {
-        vertices.append(server->getPosition());
-    }
-    for (const auto &drone : *mapDrones) {
-        vertices.append(drone->getPosition());
-    }
-    qDebug() << "Total vertices before triangulation:" << vertices.size(); // Debug statement
 
-    generateTriangles();
 
+    // 6) Re-scale and update
     reScale();
     update();
-
 }
+
+*/
 
 void Canvas::paintEvent(QPaintEvent *)
 {
@@ -178,6 +212,9 @@ void Canvas::paintEvent(QPaintEvent *)
     // Fill the background
     painter.fillRect(rect(), Qt::white);
 
+
+
+
     // ----- APPLY THE TRANSFORM (IMPORTANT!) -----
     // This will ensure large or small coordinates
     // are mapped into the visible area of the widget.
@@ -185,17 +222,10 @@ void Canvas::paintEvent(QPaintEvent *)
     painter.scale(scaleFactor, scaleFactor);
     painter.translate(-origin.x, -origin.y);
 
-    // 1) Draw all triangles
-    for (auto &triangle : triangles) {
-        painter.setPen(QPen(Qt::black, 2));
-        painter.setBrush(QColor(255, 0, 0, 128));
-        QPolygonF poly;
-        poly << QPointF(triangle.getVertexPtr(0)->x, triangle.getVertexPtr(0)->y)
-             << QPointF(triangle.getVertexPtr(1)->x, triangle.getVertexPtr(1)->y)
-             << QPointF(triangle.getVertexPtr(2)->x, triangle.getVertexPtr(2)->y);
-        painter.drawPolygon(poly);
-
+    for (auto &tri : triangles) {
+        tri.draw(painter);
     }
+
 
     // 2) Draw servers
     QPen serverPen(Qt::blue);
@@ -346,3 +376,13 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
     update(); // or repaint(), but update() is usually recommended
 }
+
+Server* Canvas::findServerByName(const QString& name) {
+    for (Server* server : servers) {
+        if (server->getName() == name) {
+            return server;
+        }
+    }
+    return nullptr; // Return null if no server is found
+}
+
