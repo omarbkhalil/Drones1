@@ -116,6 +116,8 @@ void MainWindow::on_actionLoad_triggered() {
             }
         }
     }
+     ui->widget->flippAll();
+
     ui->widget->setServers(servers); // Pass to Canvas
     ui->widget->update(); // Trigger a repaint if needed
 

@@ -133,6 +133,20 @@ void Canvas::generateSimpleTriangles() {
 
 }
 
+void Canvas::flippAll() {
+    while (!checkDelaunay()) {
+        auto it = triangles.begin();
+        while (it != triangles.end() && !it->isFlippable()) {
+            it++;
+        }
+        if (it != triangles.end()) {
+            it->flippIt(triangles);
+        } else {
+            qDebug() << "issue";
+        }
+    }
+}
+
 /* void Canvas::loadMesh(const QString &filePath)
 {
     std::cout << "loadMesh called with file: " << filePath.toStdString() << std::endl;

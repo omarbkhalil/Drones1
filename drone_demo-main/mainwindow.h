@@ -31,7 +31,6 @@ public:
 private slots:
     void on_actionQuit_triggered();
     void update();
-    void on_actionTriangles_triggered(bool checked);
 
     void on_actionLoad_triggered();
 

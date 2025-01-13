@@ -26,7 +26,7 @@ public:
     inline int getSizeofV() { return vertices.size();}
     inline int getSizeofT() { return triangles.size();}
     void addTriangle(int id0, int id1, int id2, const QColor &color) ;
-
+    QVector<const Vector2D*> findOppositePointOfTrianglesWithEdgeCommon(const Triangle &tri);
     void addTriangle(int id0, int id1, int id2) ;
     void addTriangle(const Vector2D &v1, const Vector2D &v2, const Vector2D &v3, const QColor &color) ;
     bool checkDelaunay();
@@ -36,6 +36,7 @@ public:
     void addPoints(const QVector<Vector2D> &tab);
     void loadMesh(const QString &filePath);
     QVector<const Vector2D *> findOppositePointOfTriangle(Triangle &tri);
+    void flippAll();
     Server* findServerByName(const QString& name) ;
     bool showTriangles=true;
 protected:
