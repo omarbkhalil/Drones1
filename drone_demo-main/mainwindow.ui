@@ -74,7 +74,7 @@
      <x>0</x>
      <y>0</y>
      <width>1268</width>
-     <height>17</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -89,6 +89,8 @@
     <property name="title">
      <string>compute</string>
     </property>
+    <addaction name="actionshowCenters"/>
+    <addaction name="actionshowDelaunay"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuDelaunay"/>
@@ -105,6 +107,22 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actionshowCenters">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>showCenters</string>
+   </property>
+  </action>
+  <action name="actionshowDelaunay">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>showDelaunay</string>
    </property>
   </action>
  </widget>

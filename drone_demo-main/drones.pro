@@ -14,6 +14,7 @@ SOURCES += \
     drone.cpp \
     main.cpp \
     mainwindow.cpp \
+    mypolygon.cpp \
     server.cpp \
     triangle.cpp \
     vector2d.cpp
@@ -22,6 +23,7 @@ HEADERS += \
     determinant.h \
     drone.h \
     mainwindow.h \
+    mypolygon.h \
     server.h \
     triangle.h \
     vector2d.h

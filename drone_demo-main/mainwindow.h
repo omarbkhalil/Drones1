@@ -34,6 +34,10 @@ private slots:
 
     void on_actionLoad_triggered();
 
+    void on_actionshowCenters_triggered(bool checked);
+
+    void on_actionshowDelaunay_triggered(bool checked);
+
 private:
     Ui::MainWindow *ui;
     QMap<QString,Drone*> mapDrones;
