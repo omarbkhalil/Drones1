@@ -84,8 +84,21 @@ void Canvas::generateEarClippingTriangles()
     // Perform ear-clipping triangulation
     polygon->earClippingTriangulate();
 
+    // Extract triangles from the polygon and store them in Canvas::triangles
+    for (const Triangle &tri : polygon->getTriangles()) {
+        triangles.append(tri); // Add each triangle to Canvas' triangle list
+    }
+
     // Store the polygon for rendering
     polygons.push_back(polygon);
+
+    // Debug: Log triangle vertices
+    for (const Triangle &tri : triangles) {
+        qDebug() << "Triangle vertices: ("
+                 << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << "), ("
+                 << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << "), ("
+                 << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y << ")";
+    }
 
     qDebug() << "Ear-clipping triangulation generated.";
 
@@ -118,36 +131,63 @@ bool Canvas::checkDelaunay()
 QVector<const Vector2D *> Canvas::findOppositePointOfTriangle(Triangle &tri)
 {
     QVector<const Vector2D *> list;
+
     for (auto &otherTri : triangles) {
-        if (tri.hasEdge(otherTri.getVertexPtr(1), otherTri.getVertexPtr(0))) {
-            list.append(otherTri.getVertexPtr(2));
+        // Skip self
+        if (&otherTri == &tri) continue;
+
+        // Find common edges
+        int commonCount = 0;
+        Vector2D *commonA = nullptr;
+        Vector2D *commonB = nullptr;
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (*tri.getVertexPtr(i) == *otherTri.getVertexPtr(j)) {
+                    if (commonCount == 0)
+                        commonA = tri.getVertexPtr(i);
+                    else if (commonCount == 1)
+                        commonB = tri.getVertexPtr(i);
+
+                    commonCount++;
+                }
+            }
         }
-        else if (tri.hasEdge(otherTri.getVertexPtr(2), otherTri.getVertexPtr(1))) {
-            list.append(otherTri.getVertexPtr(0));
-        }
-        else if (tri.hasEdge(otherTri.getVertexPtr(0), otherTri.getVertexPtr(2))) {
-            list.append(otherTri.getVertexPtr(1));
+
+        // If exactly 2 vertices are shared, it's a common edge
+        if (commonCount == 2) {
+            for (int i = 0; i < 3; i++) {
+                const Vector2D *v = otherTri.getVertexPtr(i);
+                if (v != commonA && v != commonB) {
+                    list.append(v);
+                    break;
+                }
+            }
         }
     }
+
     return list;
 }
 
 void Canvas::flippAll()
 {
-    // keep flipping until checkDelaunay() returns true or no flippable triangles exist
-    while (!checkDelaunay()) {
-        auto it = triangles.begin();
-        while (it != triangles.end() && !it->isFlippable()) {
-            it++;
-        }
-        if (it != triangles.end()) {
-            it->flippIt(triangles);
-        } else {
-            qDebug() << "issue: no more flippable triangles found but still not Delaunay?";
-            break;
+    bool delaunay = false;
+
+    while (!delaunay) {
+        delaunay = true;
+
+        for (Triangle &tri : triangles) {
+            if (!tri.checkDelaunay(vertices)) {
+                tri.flippIt(triangles);
+                delaunay = false;
+            }
         }
     }
+
+    qDebug() << "All triangles are now Delaunay.";
+    update();
 }
+
 
 /* void Canvas::loadMesh(const QString &filePath)
 {
@@ -303,6 +343,7 @@ void Canvas::paintEvent(QPaintEvent *)
             painter.restore();
         }
     }
+
 }
 
 void Canvas::resizeEvent(QResizeEvent *)
@@ -353,20 +394,73 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 {
     if (!event) return;
 
-    // find a landed drone
+    float canvasX = (event->pos().x() - 10) / scaleFactor + origin.x;
+    float canvasY = (event->pos().y() - 10) / scaleFactor + origin.y;
+    Vector2D clickPosition(canvasX, canvasY);
+
+    qDebug() << "Mouse clicked at screen coordinates:" << event->pos().x() << event->pos().y();
+    qDebug() << "Transformed to canvas coordinates:" << canvasX << canvasY;
+
+    // Check if the click is inside any triangle
+    for (Triangle &tri : triangles) {
+        qDebug() << "Checking triangle with vertices: ("
+                 << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << "), ("
+                 << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << "), ("
+                 << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y << ")";
+        if (tri.isInside(clickPosition)) {
+            qDebug() << "Point is inside the triangle!";
+            tri.flippIt(triangles); // Attempt to flip the clicked triangle
+            update(); // Repaint after the change
+            return;
+        } else {
+            qDebug() << "Point is outside the triangle.";
+        }
+    }
+
+    qDebug() << "No triangle clicked.";
+
+    // Original functionality: Handle drones if no triangle was clicked
     auto it = mapDrones->begin();
     while (it != mapDrones->end() && (*it)->getStatus() != Drone::landed) {
         ++it;
     }
 
     if (it != mapDrones->end()) {
-        // If needed, convert from screen coords to "canvas" coords:
-        // But for now, let's just set the clicked pixel as the goal:
+        // Set the clicked position as the goal for the landed drone
         (*it)->setGoalPosition(Vector2D(event->pos().x(), event->pos().y()));
         (*it)->start();
     }
+
     update();
 }
+bool Canvas::handleTriangleClick(const Vector2D &clickPosition)
+{
+    for (Triangle &tri : triangles) {
+        if (tri.isInside(clickPosition)) {
+            qDebug() << "Triangle clicked!";
+            tri.flippIt(triangles); // Attempt to flip the clicked triangle
+            return true; // Triangle was clicked
+        }
+    }
+    qDebug() << "No triangle clicked.";
+    return false; // No triangle was clicked
+}
+
+void Canvas::handleDroneClick(const QPoint &screenPos)
+{
+    // Find a landed drone
+    auto it = mapDrones->begin();
+    while (it != mapDrones->end() && (*it)->getStatus() != Drone::landed) {
+        ++it;
+    }
+
+    if (it != mapDrones->end()) {
+        // Set the clicked position as the goal for the landed drone
+        (*it)->setGoalPosition(Vector2D(screenPos.x(), screenPos.y()));
+        (*it)->start();
+    }
+}
+
 
 Server* Canvas::findServerByName(const QString &name) {
     for (Server* srv : servers) {

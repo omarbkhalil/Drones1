@@ -74,6 +74,9 @@ private:
     QImage droneImg;
     float scale = 1.0f;
     Vector2D origin;
+
+    bool handleTriangleClick(const Vector2D &clickPosition); ///< Handles triangle flipping on click
+    void handleDroneClick(const QPoint &screenPos);
 };
 
 #endif // CANVAS_H

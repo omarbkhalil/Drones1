@@ -35,11 +35,15 @@ public:
     /**
      * @brief addVertex inserts a new vertex (x,y) if we have room
      */
+    void addVertex(float x, float y);
 
+    /**
+     * @brief getTriangles
+     * @return a reference to the internal triangle list
+     */
     const QVector<Triangle>& getTriangles() const {
         return triangles;
     }
-    void addVertex(float x, float y);
 
     /**
      * @brief getBoundingBox finds the min/max corners of the polygon
@@ -94,7 +98,7 @@ private:
     /**
      * @brief isEar checks if poly[i] is an “ear” vertex
      */
-    bool isEar(QVector<Vector2D> &poly, int i) const;
+    bool isEar(const QVector<Vector2D*> &poly, int i) const;
 
     /**
      * @brief pointInTriangle checks if point p is inside triangle ABC

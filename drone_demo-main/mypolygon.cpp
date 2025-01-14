@@ -146,11 +146,10 @@ void MyPolygon::earClippingTriangulate()
     // Clear old data
     triangles.clear();
 
-    // Copy the polygon points to a modifiable container
-    QVector<Vector2D> poly;
-    poly.reserve(N);
+    // Copy vertices to a modifiable container
+    QVector<Vector2D*> poly;
     for (int i = 0; i < N; i++) {
-        poly.push_back(tabPts[i]);
+        poly.append(&tabPts[i]);
     }
 
     if (poly.size() < 3) {
@@ -158,7 +157,7 @@ void MyPolygon::earClippingTriangulate()
         return;
     }
 
-    // We'll keep removing ears until we get down to 3 vertices
+    // Ear-clipping process
     while (poly.size() > 3) {
         bool earFound = false;
 
@@ -168,36 +167,33 @@ void MyPolygon::earClippingTriangulate()
                 int iPrev = (i - 1 + poly.size()) % poly.size();
                 int iNext = (i + 1) % poly.size();
 
-                // Construct a triangle from these 3 points
-                // We'll allocate new Vector2D for each corner
-                // (be mindful of memory in a bigger app)
-                Vector2D* vA = new Vector2D(poly[iPrev]);
-                Vector2D* vB = new Vector2D(poly[i]);
-                Vector2D* vC = new Vector2D(poly[iNext]);
+                // Construct a triangle using pointers to existing vertices
+                Triangle tri(poly[iPrev], poly[i], poly[iNext], Qt::red);
 
-                Triangle tri(vA, vB, vC, Qt::red);
+                // Set opposite points for flippable edges
+                if (!triangles.isEmpty()) {
+                    triangles.last().setOpposite(poly[iNext]);
+                    tri.setOpposite(poly[iPrev]);
+                }
+
                 triangles.push_back(tri);
 
                 // Remove the ear tip from the polygon
-                poly.remove(i);
+                poly.removeAt(i);
                 earFound = true;
                 break;
             }
         }
 
         if (!earFound) {
-            // Possibly the polygon is not simple or something else is wrong
             qDebug() << "Ear not found. Polygon may be self-intersecting or invalid.";
-            break;
+            return; // Exit if the polygon is invalid
         }
     }
 
-    // If exactly 3 left, that's our final triangle
+    // Final triangle
     if (poly.size() == 3) {
-        Vector2D* vA = new Vector2D(poly[0]);
-        Vector2D* vB = new Vector2D(poly[1]);
-        Vector2D* vC = new Vector2D(poly[2]);
-        Triangle tri(vA, vB, vC, Qt::red);
+        Triangle tri(poly[0], poly[1], poly[2], Qt::red);
         triangles.push_back(tri);
     }
 
@@ -207,34 +203,33 @@ void MyPolygon::earClippingTriangulate()
 // --------------------------------------------------
 // Checks if poly[i] is an ear
 // --------------------------------------------------
-bool MyPolygon::isEar(QVector<Vector2D> &poly, int i) const
+bool MyPolygon::isEar(const QVector<Vector2D*> &poly, int i) const
 {
     int n = poly.size();
     int iPrev = (i - 1 + n) % n;
     int iNext = (i + 1) % n;
 
-    const Vector2D &A = poly[iPrev];
-    const Vector2D &B = poly[i];
-    const Vector2D &C = poly[iNext];
+    const Vector2D *A = poly[iPrev];
+    const Vector2D *B = poly[i];
+    const Vector2D *C = poly[iNext];
 
-    // 1) Check if ABC is "convex" for a CCW polygon => cross(AB, BC) >= 0
-    Vector2D AB = B - A;
-    Vector2D BC = C - B;
+    Vector2D AB = *B - *A;
+    Vector2D BC = *C - *B;
     float crossVal = AB.x * BC.y - AB.y * BC.x;
     if (crossVal < 0.0f) {
-        // If < 0 => it's a reflex angle => not an ear
-        return false;
+        return false; // Reflex angle, not an ear
     }
 
-    // 2) Check that no other vertex is inside triangle (A,B,C)
     for (int j = 0; j < n; j++) {
         if (j == iPrev || j == i || j == iNext) continue;
-        if (pointInTriangle(poly[j], A, B, C)) {
+        if (pointInTriangle(*poly[j], *A, *B, *C)) {
             return false;
         }
     }
+
     return true;
 }
+
 
 // --------------------------------------------------
 // Check if point p is inside triangle ABC
@@ -254,6 +249,6 @@ bool MyPolygon::pointInTriangle(const Vector2D &p,
     float areaPBC = std::fabs(cross(p - B, C - B));
     float areaPCA = std::fabs(cross(p - C, A - C));
 
-    float sum = areaPAB + areaPBC + areaPCA;
-    return (std::fabs(sum - areaABC) < 1e-5);
+    return (std::fabs(areaABC - (areaPAB + areaPBC + areaPCA)) < 1e-5);
 }
+

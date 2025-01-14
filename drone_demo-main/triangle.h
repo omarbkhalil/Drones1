@@ -41,21 +41,21 @@ public:
     // ----------------------------
     // Constructors
     // ----------------------------
+    Triangle(Vector2D* v0, Vector2D* v1, Vector2D* v2, const QColor &color = Qt::yellow)
+    {
+        ptr[0] = v0;
+        ptr[1] = v1;
+        ptr[2] = v2;
+        setColor(color);
+        computeCircle(); // Precompute the circumcircle
+    }
+
     Triangle(Vector2D* ptr1, Vector2D* ptr2, Vector2D* ptr3)
     {
         ptr[0] = ptr1;
         ptr[1] = ptr2;
         ptr[2] = ptr3;
         setColor(Qt::yellow);
-        computeCircle();
-    }
-
-    Triangle(Vector2D* ptr1, Vector2D* ptr2, Vector2D* ptr3, const QColor &p_color)
-    {
-        ptr[0] = ptr1;
-        ptr[1] = ptr2;
-        ptr[2] = ptr3;
-        setColor(p_color);
         computeCircle();
     }
 
@@ -88,8 +88,14 @@ public:
         return flippable;
     }
 
+
     inline void setOpposite(Vector2D* o)
     {
+        if (o) {
+            qDebug() << "Setting opposite point:" << o->x << o->y;
+        } else {
+            qDebug() << "Setting opposite point: nullptr";
+        }
         flippPoint = o;
     }
 
@@ -97,7 +103,6 @@ public:
     {
         return flippPoint;
     }
-
     inline void setHighlighted(bool v)
     {
         isHighlited = v;

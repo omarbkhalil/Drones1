@@ -33,10 +33,19 @@ bool Triangle::isOnTheLeft(const Vector2D *P, const Vector2D *P1, const Vector2D
 //-------------------------------------
 bool Triangle::isInside(const Vector2D &P)
 {
-    return isOnTheLeft(&P, ptr[0], ptr[1]) &&
-           isOnTheLeft(&P, ptr[1], ptr[2]) &&
-           isOnTheLeft(&P, ptr[2], ptr[0]);
+    // Store results of checks in variables
+    bool left1 = isOnTheLeft(&P, ptr[0], ptr[1]);
+    bool left2 = isOnTheLeft(&P, ptr[1], ptr[2]);
+    bool left3 = isOnTheLeft(&P, ptr[2], ptr[0]);
+
+    // Log the results for debugging
+    qDebug() << "Point:" << P.x << P.y
+             << "Left1:" << left1 << "Left2:" << left2 << "Left3:" << left3;
+
+    // Return true only if all checks are true
+    return left1 && left2 && left3;
 }
+
 
 //-------------------------------------
 bool Triangle::hasEdge(Vector2D A, Vector2D B) const
@@ -89,29 +98,29 @@ bool Triangle::checkDelaunay(const QVector<Vector2D> &tabVertices)
 
         mat.m[0][0] = A->x - D.x;
         mat.m[0][1] = A->y - D.y;
-        mat.m[0][2] = (A->x*A->x - D.x*D.x) + (A->y*A->y - D.y*D.y);
+        mat.m[0][2] = (A->x * A->x - D.x * D.x) + (A->y * A->y - D.y * D.y);
 
         mat.m[1][0] = B->x - D.x;
         mat.m[1][1] = B->y - D.y;
-        mat.m[1][2] = (B->x*B->x - D.x*D.x) + (B->y*B->y - D.y*D.y);
+        mat.m[1][2] = (B->x * B->x - D.x * D.x) + (B->y * B->y - D.y * D.y);
 
         mat.m[2][0] = C->x - D.x;
         mat.m[2][1] = C->y - D.y;
-        mat.m[2][2] = (C->x*C->x - D.x*D.x) + (C->y*C->y - D.y*D.y);
+        mat.m[2][2] = (C->x * C->x - D.x * D.x) + (C->y * C->y - D.y * D.y);
 
         // If determinant > 0, it means D is inside the circumcircle
         if (mat.determinant() > 0) {
             isOk = false;
+            qDebug() << "Point inside circumcircle. Not Delaunay.";
             break;
         }
     }
 
-    // if isOk is true, no points found inside -> it's Delaunay
-    // else false
     isDelaunay = isOk;
-    flippable  = false;
-    return isDelaunay;
+    flippable = !isOk;
+    return isOk;
 }
+
 
 //-------------------------------------
 void Triangle::updateVertices(Vector2D *_A, Vector2D *_B, Vector2D *_C)
@@ -131,22 +140,24 @@ void Triangle::draw(QPainter &painter)
     pen.setWidth(3);
     painter.setPen(pen);
 
-    // Example logic: If isDelaunay, color it cyan; if flippable, color it gray; otherwise, yellow
-    QColor c = (isDelaunayTriangle() ? Qt::cyan
-                                     : (flippable ? Qt::gray : Qt::yellow));
+    // Determine color: cyan if Delaunay, gray if flippable, yellow otherwise
+    QColor color = isDelaunayTriangle() ? Qt::cyan : (flippable ? Qt::gray : Qt::yellow);
+
+    // Adjust brightness if highlighted
     if (isHighlighted()) {
         float h, s, l;
-        c.getHslF(&h, &s, &l);
-        c.setHslF(h, s, l * 0.75f);
+        color.getHslF(&h, &s, &l);
+        color.setHslF(h, s, l * 0.75f);
         qDebug() << "Triangle is highlighted. Adjusted color brightness.";
     }
-    painter.setBrush(c);
+
+    painter.setBrush(color);
 
     QPointF points[3];
     for (int i = 0; i < 3; i++) {
         if (!ptr[i]) {
             qDebug() << "Error: Null pointer encountered for vertex" << i;
-            return;  // abort drawing
+            return;  // Abort drawing if any vertex is null
         }
 
         points[i].setX(ptr[i]->x);
@@ -157,21 +168,9 @@ void Triangle::draw(QPainter &painter)
     try {
         painter.drawPolygon(points, 3);
         qDebug() << "Successfully drew triangle.";
-    }
-    catch (...) {
+    } catch (...) {
         qDebug() << "Error while drawing triangle.";
     }
-}
-
-//-------------------------------------
-void Triangle::drawCircle(QPainter &painter)
-{
-    painter.setPen(QPen(Qt::black, 3, Qt::DashLine));
-    painter.setBrush(Qt::NoBrush);
-    painter.drawEllipse(circumCenter.x - circumRadius,
-                        circumCenter.y - circumRadius,
-                        2.f * circumRadius,
-                        2.f * circumRadius);
 }
 
 //-------------------------------------
@@ -180,51 +179,67 @@ void Triangle::flippIt(QVector<Triangle> &triangles)
     qDebug() << "Attempting to flip a triangle.";
 
     QVector<const Vector2D*> commonEdges;
-    bool flipCompleted = false;
-    int i = 0;
 
-    while (i < triangles.size() && !flipCompleted) {
-        Triangle &tri = triangles[i];
+    for (Triangle &tri : triangles) {
+        // Skip self
+        if (&tri == this) continue;
 
-        // Must not be the same triangle, must contain my 'opposite' point
-        if (tri.isFlippable() && &tri != this && tri.contains(*this->getOpposite())) {
-            qDebug() << "Checking triangle for flipping:" << tri.ptr[0] << tri.ptr[1] << tri.ptr[2];
+        // Clear previous common edges
+        commonEdges.clear();
 
-            int edgeIndex = 0;
-            while (edgeIndex < 3 && !flipCompleted) {
-                if (edgeIndex == 0 && tri.hasEdge(*this->getVertexPtr(1), *this->getVertexPtr(0))) {
-                    commonEdges = {this->getVertexPtr(1), this->getVertexPtr(0)};
-                }
-                else if (edgeIndex == 1 && tri.hasEdge(*this->getVertexPtr(2), *this->getVertexPtr(1))) {
-                    commonEdges = {this->getVertexPtr(2), this->getVertexPtr(1)};
-                }
-                else if (edgeIndex == 2 && tri.hasEdge(*this->getVertexPtr(0), *this->getVertexPtr(2))) {
-                    commonEdges = {this->getVertexPtr(0), this->getVertexPtr(2)};
-                }
-
-                if (!commonEdges.isEmpty()) {
-                    // Perform flip
-                    this->updateVertices(this->getOpposite(),
-                                         const_cast<Vector2D*>(commonEdges[0]),
-                                         tri.getOpposite());
-                    tri.updateVertices(tri.getOpposite(),
-                                       const_cast<Vector2D*>(commonEdges[1]),
-                                       this->getOpposite());
-
-                    flipCompleted = true;
-                    qDebug() << "Flip completed between triangles.";
-                }
-                edgeIndex++;
+        // Check for a common edge between this triangle and tri
+        for (int i = 0; i < 3; i++) {
+            if (tri.hasEdge(*this->getVertexPtr(i), *this->getVertexPtr((i + 1) % 3))) {
+                commonEdges.append(this->getVertexPtr(i));
+                commonEdges.append(this->getVertexPtr((i + 1) % 3));
+                break;
             }
         }
-        i++;
+
+        // If a common edge is found, attempt flipping
+        if (commonEdges.size() == 2) {
+            qDebug() << "Found common edge between triangles: ("
+                     << commonEdges[0]->x << "," << commonEdges[0]->y << ") and ("
+                     << commonEdges[1]->x << "," << commonEdges[1]->y << ")";
+
+            // Validate opposite points before proceeding
+            if (!this->getOpposite() || !tri.getOpposite()) {
+                qDebug() << "Error: Opposite points are not set or invalid.";
+                continue;
+            }
+
+            // Ensure the opposite points are not part of the shared edge
+            if (this->getOpposite() == commonEdges[0] || this->getOpposite() == commonEdges[1] ||
+                tri.getOpposite() == commonEdges[0] || tri.getOpposite() == commonEdges[1]) {
+                qDebug() << "Error: Opposite points are part of the shared edge. Skipping.";
+                continue;
+            }
+
+            qDebug() << "Flipping edge with opposite points: ("
+                     << this->getOpposite()->x << "," << this->getOpposite()->y << ") and ("
+                     << tri.getOpposite()->x << "," << tri.getOpposite()->y << ")";
+
+            // Perform the flip by updating vertices
+            this->updateVertices(
+                this->getOpposite(),
+                const_cast<Vector2D*>(commonEdges[0]),
+                tri.getOpposite()
+                );
+
+            tri.updateVertices(
+                tri.getOpposite(),
+                const_cast<Vector2D*>(commonEdges[1]),
+                this->getOpposite()
+                );
+
+            // Recompute circumcircles for both triangles
+            this->computeCircle();
+            tri.computeCircle();
+
+            qDebug() << "Flip completed.";
+            return;
+        }
     }
 
-    // If no flip occurred, just recompute the circle to be sure
-    if (!flipCompleted) {
-        computeCircle();
-        qDebug() << "No flip was possible.";
-    }
-
-    qDebug() << "FlippIt ended.";
+    qDebug() << "No flip performed.";
 }
