@@ -194,6 +194,8 @@ void MyPolygon::earClippingTriangulate() {
 
 // Add Internal Point and Subdivide Triangles
 void MyPolygon::addInternalPoint(const Vector2D &internalPoint) {
+    bool pointAdded = false;
+
     for (int i = 0; i < triangles.size(); ++i) {
         Triangle &tri = triangles[i];
 
@@ -217,12 +219,15 @@ void MyPolygon::addInternalPoint(const Vector2D &internalPoint) {
             triangles.append(Triangle(B, C, new Vector2D(internalPoint), Qt::yellow));
             triangles.append(Triangle(C, A, new Vector2D(internalPoint), Qt::yellow));
 
+            pointAdded = true;
             qDebug() << "Internal point added. Subdivided triangle into three.";
             return;
         }
     }
 
-    qDebug() << "Internal point not found inside any triangle. Debug further.";
+    if (!pointAdded) {
+        qDebug() << "Internal point not found inside any triangle. Debug further.";
+    }
 }
 
 

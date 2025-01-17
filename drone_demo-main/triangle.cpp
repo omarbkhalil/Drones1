@@ -44,7 +44,7 @@ bool Triangle::isInside(const Vector2D &P)
              << "Left1:" << left1 << "Left2:" << left2 << "Left3:" << left3;
 
     // Return true only if all checks are true
-    return left1 && left2 && left3;
+    return left1 && left2 && left3;  // Point is inside only if all checks pass
 }
 
 
@@ -133,16 +133,15 @@ void Triangle::updateVertices(Vector2D *_A, Vector2D *_B, Vector2D *_C)
 }
 
 //-------------------------------------
-void Triangle::draw(QPainter &painter)
-{
-
+void Triangle::draw(QPainter &painter) {
     qDebug() << "Entered Triangle::draw";
 
+    // Set the pen properties
     QPen pen(Qt::black);
     pen.setWidth(3);
     painter.setPen(pen);
 
-    // Determine color: cyan if Delaunay, gray if flippable, yellow otherwise
+    // Determine the fill color
     QColor color = isDelaunayTriangle() ? Qt::cyan : (flippable ? Qt::gray : Qt::yellow);
 
     // Adjust brightness if highlighted
@@ -155,6 +154,7 @@ void Triangle::draw(QPainter &painter)
 
     painter.setBrush(color);
 
+    // Prepare points for the triangle
     QPointF points[3];
     for (int i = 0; i < 3; i++) {
         if (!ptr[i]) {
@@ -167,6 +167,7 @@ void Triangle::draw(QPainter &painter)
         qDebug() << "Vertex" << i << ": (" << ptr[i]->x << "," << ptr[i]->y << ")";
     }
 
+    // Draw the triangle
     try {
         painter.drawPolygon(points, 3);
         qDebug() << "Successfully drew triangle.";
@@ -174,6 +175,7 @@ void Triangle::draw(QPainter &painter)
         qDebug() << "Error while drawing triangle.";
     }
 }
+
 void Triangle::drawCircle(QPainter &painter) {
     painter.setPen(QPen(Qt::black,3,Qt::DashLine));
     painter.setBrush(Qt::NoBrush);

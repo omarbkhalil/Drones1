@@ -449,8 +449,7 @@ QPair<Vector2D, Vector2D> Canvas::getBox()
     return { infLeft, supRight };
 }
 
-void Canvas::mousePressEvent(QMouseEvent *event)
-{
+void Canvas::mousePressEvent(QMouseEvent *event) {
     if (!event) return;
 
     float canvasX = (event->pos().x() - 10) / scaleFactor + origin.x;
@@ -460,38 +459,22 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     qDebug() << "Mouse clicked at screen coordinates:" << event->pos().x() << event->pos().y();
     qDebug() << "Transformed to canvas coordinates:" << canvasX << canvasY;
 
-    // Check if the click is inside any triangle
-    for (Triangle &tri : triangles) {
-        qDebug() << "Checking triangle with vertices: ("
-                 << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << "), ("
-                 << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << "), ("
-                 << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y << ")";
-        if (tri.isInside(clickPosition)) {
-            qDebug() << "Point is inside the triangle!";
-            tri.setHighlighted(tri.isInside(canvasX, canvasY));
-        //    tri.flippIt(triangles); // Attempt to flip the clicked triangle
-            update(); // Repaint after the change
-            return;
-        } else {
-            qDebug() << "Point is outside the triangle.";
+    // Check if a triangle was clicked
+    bool triangleClicked = handleTriangleClick(clickPosition);
+
+    if (!triangleClicked) {
+        // Add the clicked point as an internal point
+        qDebug() << "No triangle clicked. Adding internal point.";
+        myPolygon.addInternalPoint(clickPosition);
+
+        // Regenerate triangles
+        triangles.clear();
+        for (const Triangle &tri : myPolygon.getTriangles()) {
+            triangles.append(tri);
         }
+
+        update(); // Redraw the canvas
     }
-
-    qDebug() << "No triangle clicked.";
-
-    // Original functionality: Handle drones if no triangle was clicked
-    auto it = mapDrones->begin();
-    while (it != mapDrones->end() && (*it)->getStatus() != Drone::landed) {
-        ++it;
-    }
-
-    if (it != mapDrones->end()) {
-        // Set the clicked position as the goal for the landed drone
-        (*it)->setGoalPosition(Vector2D(event->pos().x(), event->pos().y()));
-        (*it)->start();
-    }
-
-    update();
 }
 
 /*void Canvas::mouseMoveEvent(QMouseEvent *event) {
