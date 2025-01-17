@@ -140,8 +140,7 @@ double MyPolygon::computeSignedArea() const
 // --------------------------------------------------
 // Ear clipping
 // --------------------------------------------------
-void MyPolygon::earClippingTriangulate()
-{
+void MyPolygon::earClippingTriangulate() {
     // Clear old data
     triangles.clear();
 
@@ -169,12 +168,6 @@ void MyPolygon::earClippingTriangulate()
                 // Construct a triangle using pointers to existing vertices
                 Triangle tri(poly[iPrev], poly[i], poly[iNext], Qt::red);
 
-                // Set opposite points for flippable edges
-                if (!triangles.isEmpty()) {
-                    triangles.last().setOpposite(poly[iNext]);
-                    tri.setOpposite(poly[iPrev]);
-                }
-
                 triangles.push_back(tri);
 
                 // Remove the ear tip from the polygon
@@ -199,6 +192,38 @@ void MyPolygon::earClippingTriangulate()
     qDebug() << "Ear clipping done. Triangles formed:" << triangles.size();
 }
 
+// Add Internal Point and Subdivide Triangles
+void MyPolygon::addInternalPoint(const Vector2D &internalPoint) {
+    for (int i = 0; i < triangles.size(); ++i) {
+        Triangle &tri = triangles[i];
+
+        // Check if the internal point is inside this triangle
+        if (tri.isInside(internalPoint)) {
+            qDebug() << "Internal point found inside triangle: "
+                     << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << " - "
+                     << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << " - "
+                     << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y;
+
+            // Get triangle vertices
+            Vector2D *A = tri.getVertexPtr(0);
+            Vector2D *B = tri.getVertexPtr(1);
+            Vector2D *C = tri.getVertexPtr(2);
+
+            // Remove the original triangle
+            triangles.removeAt(i);
+
+            // Add three new triangles
+            triangles.append(Triangle(A, B, new Vector2D(internalPoint), Qt::yellow));
+            triangles.append(Triangle(B, C, new Vector2D(internalPoint), Qt::yellow));
+            triangles.append(Triangle(C, A, new Vector2D(internalPoint), Qt::yellow));
+
+            qDebug() << "Internal point added. Subdivided triangle into three.";
+            return;
+        }
+    }
+
+    qDebug() << "Internal point not found inside any triangle. Debug further.";
+}
 
 
 // --------------------------------------------------

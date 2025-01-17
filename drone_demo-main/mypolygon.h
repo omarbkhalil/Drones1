@@ -88,6 +88,8 @@ public:
      */
     void earClippingTriangulate();
 void computeConvexHull();
+    void addInternalPoint(const Vector2D &internalPoint);
+
 private:
     /**
      * @brief computeSignedArea uses the shoelace formula

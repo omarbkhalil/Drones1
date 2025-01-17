@@ -267,9 +267,7 @@ int triangleCount = 0;
 }
 
 */
-
-void Canvas::generateEarClippingTriangles()
-{
+void Canvas::generateEarClippingTriangles() {
     // Clear old data
     triangles.clear();
     polygons.clear();
@@ -291,9 +289,15 @@ void Canvas::generateEarClippingTriangles()
     // Perform ear-clipping triangulation
     polygon->earClippingTriangulate();
 
+    // Add internal points to the triangulation
+    QVector<Vector2D> internalPoints = {Vector2D(200, 200)}; // Replace with actual internal points
+    for (const Vector2D &internalPoint : internalPoints) {
+        polygon->addInternalPoint(internalPoint);
+    }
+
     // Extract triangles from the polygon and store them in Canvas::triangles
     for (const Triangle &tri : polygon->getTriangles()) {
-        triangles.append(tri); // Add each triangle to Canvas' triangle list
+        triangles.append(tri);
     }
 
     // Store the polygon for rendering
@@ -307,10 +311,11 @@ void Canvas::generateEarClippingTriangles()
                  << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y << ")";
     }
 
-    qDebug() << "Ear-clipping triangulation generated.";
+    qDebug() << "Ear-clipping triangulation with internal points generated.";
 
     update();
 }
+
 
 
 void Canvas::paintEvent(QPaintEvent *)
