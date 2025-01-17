@@ -16,7 +16,10 @@ class Canvas : public QWidget {
 public:
     bool showCenters = false;
     bool showDelaunay = false;
+    bool showCircles = false;
+
     bool showTriangles = true;
+
 
     const int droneIconSize = 64; ///< size of the drone picture in the canvas
     const double droneCollisionDistance = droneIconSize * 1.5; ///< distance to detect collision with other drone
@@ -29,7 +32,7 @@ public:
     ~Canvas();
 
     void setMap(QMap<QString, Drone *> *map) { mapDrones = map; }
-   // void setServerPositions(const QVector<Vector2D> &positions) { serverPositions = positions; }
+    // void setServerPositions(const QVector<Vector2D> &positions) { serverPositions = positions; }
     void setServers(const QVector<Server *> &serverList) { servers = serverList; }
 
     inline int getSizeofV() { return vertices.size();}
@@ -46,12 +49,13 @@ public:
     void clearTriangles();
     void flippAll();
 
+    void setPolygon(const MyPolygon& polygon);
 
     void generateSimpleTriangles() ;
 
     void clear();
     void addPoints(const QVector<Vector2D> &tab);
-     void generateEarClippingTriangles();
+    void generateEarClippingTriangles();
 
     //void loadMesh(const QString &filePath);
     Server* findServerByName(const QString& name) ;
@@ -65,6 +69,7 @@ private:
     void reScale();
     void generateTriangles();
     float scaleFactor = 1.0f;
+    MyPolygon myPolygon;  // Polygon to be drawn
 
     QVector<Triangle> triangles;
     QVector<Vector2D> vertices;

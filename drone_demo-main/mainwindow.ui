@@ -74,7 +74,7 @@
      <x>0</x>
      <y>0</y>
      <width>1268</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -91,6 +91,7 @@
     </property>
     <addaction name="actionshowCenters"/>
     <addaction name="actionshowDelaunay"/>
+    <addaction name="actionshowCircles"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuDelaunay"/>
@@ -123,6 +124,14 @@
    </property>
    <property name="text">
     <string>showDelaunay</string>
+   </property>
+  </action>
+  <action name="actionshowCircles">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>showCircles</string>
    </property>
   </action>
  </widget>

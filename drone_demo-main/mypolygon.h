@@ -67,7 +67,7 @@ public:
      * @param n output param for how many vertices
      * @return pointer to the internal array of Vector2D
      */
-    const Vector2D *getVertices(int &n) const;
+    Vector2D *getVertices(int &n);
 
     /**
      * @brief draw renders the polygon and, if showTriangles==true,
@@ -87,7 +87,7 @@ public:
      *        Make sure to call ensureCCW() first if needed.
      */
     void earClippingTriangulate();
-
+void computeConvexHull();
 private:
     /**
      * @brief computeSignedArea uses the shoelace formula

@@ -3,6 +3,7 @@ release/determinant.o
 release/drone.o
 release/main.o
 release/mainwindow.o
+release/mypolygon.o
 release/server.o
 release/triangle.o
 release/vector2d.o

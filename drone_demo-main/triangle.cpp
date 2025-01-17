@@ -7,6 +7,7 @@
 //-------------------------------------
 void Triangle::computeCircle()
 {
+
     // We assume ptr[0], ptr[1], ptr[2] are valid
     Vector2D AB = *ptr[1] - *ptr[0];
     Vector2D AC = *ptr[2] - *ptr[0];
@@ -134,6 +135,7 @@ void Triangle::updateVertices(Vector2D *_A, Vector2D *_B, Vector2D *_C)
 //-------------------------------------
 void Triangle::draw(QPainter &painter)
 {
+
     qDebug() << "Entered Triangle::draw";
 
     QPen pen(Qt::black);
@@ -172,9 +174,14 @@ void Triangle::draw(QPainter &painter)
         qDebug() << "Error while drawing triangle.";
     }
 }
+void Triangle::drawCircle(QPainter &painter) {
+    painter.setPen(QPen(Qt::black,3,Qt::DashLine));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawEllipse(circumCenter.x-circumRadius,circumCenter.y-circumRadius,2.0*circumRadius,2.0*circumRadius);
+}
 
 //-------------------------------------
-void Triangle::flippIt(QVector<Triangle> &triangles)
+/*void Triangle::flippIt(QVector<Triangle> &triangles)
 {
     qDebug() << "Attempting to flip a triangle.";
 
@@ -243,3 +250,4 @@ void Triangle::flippIt(QVector<Triangle> &triangles)
 
     qDebug() << "No flip performed.";
 }
+*/

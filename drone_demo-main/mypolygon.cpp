@@ -59,49 +59,48 @@ void MyPolygon::changeColor(const Vector2D &pt)
     qDebug() << "changeColor called with pt:" << pt.x << pt.y << "(not implemented)";
 }
 
-const Vector2D *MyPolygon::getVertices(int &n) const
+ Vector2D *MyPolygon::getVertices(int &n)
 {
     n = N;
     return tabPts;
 }
 
-void MyPolygon::draw(QPainter &painter, bool showTriangles) const
-{
+void MyPolygon::draw(QPainter &painter, bool showTriangles) const {
     if (N < 3) {
-        // Not a polygon
+        // Not enough points to form a polygon
         return;
     }
 
-    // 1) Draw the polygon outline
+    // Draw the polygon outline
     QPolygonF qPolygon;
     for (int i = 0; i < N; i++) {
         qPolygon << QPointF(tabPts[i].x, tabPts[i].y);
     }
 
     painter.setBrush(currentColor);
-    painter.setPen(Qt::black);
+    painter.setPen(QPen(Qt::black, 1));  // Setting pen width for better visibility
+    painter.drawPolygon(qPolygon);
 
-    try {
-        painter.drawPolygon(qPolygon);
-    } catch (...) {
-        qDebug() << "Error while rendering polygon in MyPolygon::draw.";
-    }
+    // Draw triangles if requested
+    if (showTriangles && !triangles.empty()) {
+        for (const Triangle& tri : triangles) {
+            QPolygonF triPolygon;
+            triPolygon << QPointF(tri.ptr[0]->x, tri.ptr[0]->y)
+                       << QPointF(tri.ptr[1]->x, tri.ptr[1]->y)
+                       << QPointF(tri.ptr[2]->x, tri.ptr[2]->y)
+                       << QPointF(tri.ptr[0]->x, tri.ptr[0]->y); // Closing the triangle loop
 
-    // 2) If requested, draw the triangles that we've computed via ear clipping
-    if (showTriangles) {
-        painter.setPen(Qt::DashLine);
-        for (const auto &triangle : triangles) {
-            QPolygonF triPoly;
-            for (int j = 0; j < 3; j++) {
-                triPoly << QPointF(
-                    triangle.getVertexPtr(j)->x,
-                    triangle.getVertexPtr(j)->y
-                    );
-            }
-            painter.drawPolygon(triPoly);
+            // Set brush and pen based on triangle properties
+            painter.setBrush(tri.brush);
+            QPen pen = (tri.isHighlited) ? QPen(Qt::red, 2, Qt::SolidLine) : QPen(Qt::black, 1, Qt::SolidLine);
+            painter.setPen(pen);
+            painter.drawPolygon(triPolygon);
         }
     }
 }
+
+
+
 
 // --------------------------------------------------
 // Ensure the polygon is in CCW order
@@ -200,6 +199,8 @@ void MyPolygon::earClippingTriangulate()
     qDebug() << "Ear clipping done. Triangles formed:" << triangles.size();
 }
 
+
+
 // --------------------------------------------------
 // Checks if poly[i] is an ear
 // --------------------------------------------------
@@ -250,5 +251,36 @@ bool MyPolygon::pointInTriangle(const Vector2D &p,
     float areaPCA = std::fabs(cross(p - C, A - C));
 
     return (std::fabs(areaABC - (areaPAB + areaPBC + areaPCA)) < 1e-5);
+}
+void MyPolygon::computeConvexHull() {
+    QVector<Vector2D> points(tabPts, tabPts + N);  // Assuming points are already loaded into tabPts
+    QVector<Vector2D> hull;
+
+    // Sort points
+    std::sort(points.begin(), points.end(), [](const Vector2D& a, const Vector2D& b) {
+        return a.x < b.x || (a.x == b.x && a.y < b.y);
+    });
+
+    // Build lower hull
+    for (int i = 0; i < points.size(); ++i) {
+        while (hull.size() >= 2 && ((hull.back() - hull[hull.size() - 2]) ^ (points[i] - hull.back())) <= 0)
+            hull.pop_back();
+        hull.push_back(points[i]);
+    }
+
+    // Build upper hull
+    int t = hull.size() + 1;
+    for (int i = points.size() - 1; i >= 0; --i) {
+        while (hull.size() >= t && ((hull.back() - hull[hull.size() - 2]) ^ (points[i] - hull.back())) <= 0)
+            hull.pop_back();
+        hull.push_back(points[i]);
+    }
+
+    hull.pop_back();  // Remove the duplicate of the first point
+    // Update the MyPolygon with hull points
+    N = hull.size();
+    for (int i = 0; i < N; ++i) {
+        tabPts[i] = hull[i];
+    }
 }
 

@@ -13,6 +13,7 @@
 #include <drone.h>
 #include <vector2d.h>
 #include <server.h>
+#include <mypolygon.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -38,11 +39,14 @@ private slots:
 
     void on_actionshowDelaunay_triggered(bool checked);
 
+    void on_actionshowCircles_triggered(bool checked);
+
 private:
     Ui::MainWindow *ui;
     QMap<QString,Drone*> mapDrones;
     QTimer *timer;
     QElapsedTimer elapsedTimer;
+    MyPolygon *polygon;
 
      void loadJsonFile(const QString &filePath); // Method to load and parse JSON file
       QVector<Server *> servers; // List of servers

@@ -10,7 +10,8 @@
 
 
 Canvas::Canvas(QWidget *parent)
-    : QWidget(parent)
+    : QWidget(parent),
+    myPolygon(100)
 {
     droneImg.load("../../media/drone.png");
     setMouseTracking(true);
@@ -61,8 +62,7 @@ void Canvas::addPoints(const QVector<Vector2D> &tab)
     update();
 }
 
-void Canvas::generateEarClippingTriangles()
-{
+void Canvas::generateTriangles() {
     // Clear old data
     triangles.clear();
     polygons.clear();
@@ -73,37 +73,44 @@ void Canvas::generateEarClippingTriangles()
     }
 
     // Create a new polygon using the vertices
-    MyPolygon *polygon = new MyPolygon(vertices.size());
-    for (const auto &vertex : vertices) {
+    MyPolygon* polygon = new MyPolygon(vertices.size());
+    for (const auto& vertex : vertices) {
         polygon->addVertex(vertex.x, vertex.y);
     }
 
     // Ensure the polygon is in counter-clockwise order
-    polygon->ensureCCW();
+    //polygon->ensureCCW();
 
-    // Perform ear-clipping triangulation
-    polygon->earClippingTriangulate();
+    // Retrieve vertices and the count from the polygon
+    int numVertices;
+     Vector2D* polygonVertices = polygon->getVertices(numVertices);
 
-    // Extract triangles from the polygon and store them in Canvas::triangles
-    for (const Triangle &tri : polygon->getTriangles()) {
-        triangles.append(tri); // Add each triangle to Canvas' triangle list
+    // Create triangles using the first vertex and every subsequent pair of vertices
+    if (numVertices >= 3) {
+         Vector2D* firstVertex = &polygonVertices[0];
+        for (int i = 1; i < numVertices - 1; ++i) {
+             // Explicitly specify the color to use the first constructor
+             triangles.append(Triangle(firstVertex, &polygonVertices[i], &polygonVertices[i + 1], Qt::yellow));
+        }
     }
 
     // Store the polygon for rendering
     polygons.push_back(polygon);
 
     // Debug: Log triangle vertices
-    for (const Triangle &tri : triangles) {
+    for (const Triangle& tri : triangles) {
         qDebug() << "Triangle vertices: ("
                  << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << "), ("
                  << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << "), ("
                  << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y << ")";
     }
 
-    qDebug() << "Ear-clipping triangulation generated.";
+    qDebug() << "Triangulation generated.";
 
     update();
 }
+
+
 
 
 
@@ -169,7 +176,7 @@ QVector<const Vector2D *> Canvas::findOppositePointOfTriangle(Triangle &tri)
     return list;
 }
 
-void Canvas::flippAll()
+/*void Canvas::flippAll()
 {
     bool delaunay = false;
 
@@ -188,7 +195,7 @@ void Canvas::flippAll()
     update();
 }
 
-
+*/
 /* void Canvas::loadMesh(const QString &filePath)
 {
     std::cout << "loadMesh called with file: " << filePath.toStdString() << std::endl;
@@ -260,6 +267,52 @@ int triangleCount = 0;
 }
 
 */
+
+void Canvas::generateEarClippingTriangles()
+{
+    // Clear old data
+    triangles.clear();
+    polygons.clear();
+
+    if (vertices.size() < 3) {
+        qDebug() << "Not enough vertices to form a polygon.";
+        return;
+    }
+
+    // Create a new polygon using the vertices
+    MyPolygon *polygon = new MyPolygon(vertices.size());
+    for (const auto &vertex : vertices) {
+        polygon->addVertex(vertex.x, vertex.y);
+    }
+
+    // Ensure the polygon is in counter-clockwise order
+    polygon->ensureCCW();
+
+    // Perform ear-clipping triangulation
+    polygon->earClippingTriangulate();
+
+    // Extract triangles from the polygon and store them in Canvas::triangles
+    for (const Triangle &tri : polygon->getTriangles()) {
+        triangles.append(tri); // Add each triangle to Canvas' triangle list
+    }
+
+    // Store the polygon for rendering
+    polygons.push_back(polygon);
+
+    // Debug: Log triangle vertices
+    for (const Triangle &tri : triangles) {
+        qDebug() << "Triangle vertices: ("
+                 << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << "), ("
+                 << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << "), ("
+                 << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y << ")";
+    }
+
+    qDebug() << "Ear-clipping triangulation generated.";
+
+    update();
+}
+
+
 void Canvas::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
@@ -267,16 +320,13 @@ void Canvas::paintEvent(QPaintEvent *)
     // 1) fill background
     painter.fillRect(rect(), Qt::white);
 
-    // 2) transforms
+    // 2) apply transformations
     painter.translate(10, 10);
     painter.scale(scaleFactor, scaleFactor);
     painter.translate(-origin.x, -origin.y);
 
-    // ----- Draw Polygons -----
-    // Each MyPolygon draws its own ear-clipped triangles if showTriangles == true
-    for (auto poly : polygons) {
-        poly->draw(painter, showTriangles);
-    }
+    myPolygon.draw(painter, true);  // Assuming draw handles its own brush and pen settings
+
 
     // ----- Draw Centers (if toggled) -----
     if (showCenters) {
@@ -294,7 +344,11 @@ void Canvas::paintEvent(QPaintEvent *)
             }
         }
     }
-
+    if (showCircles) {
+        for (auto &tri : triangles) {
+            if (tri.isHighlighted()) tri.drawCircle(painter);
+        }
+    }
     // ----- Draw Servers -----
     QPen serverPen(Qt::blue);
     serverPen.setWidth(5);
@@ -312,7 +366,7 @@ void Canvas::paintEvent(QPaintEvent *)
     }
 
     // ----- Draw Drones -----
-    if (mapDrones) {
+    if (!mapDrones) {
         QPen penCol(Qt::DashDotDotLine);
         penCol.setColor(Qt::lightGray);
         penCol.setWidth(3);
@@ -409,7 +463,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                  << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y << ")";
         if (tri.isInside(clickPosition)) {
             qDebug() << "Point is inside the triangle!";
-            tri.flippIt(triangles); // Attempt to flip the clicked triangle
+            tri.setHighlighted(tri.isInside(canvasX, canvasY));
+        //    tri.flippIt(triangles); // Attempt to flip the clicked triangle
             update(); // Repaint after the change
             return;
         } else {
@@ -433,12 +488,25 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
     update();
 }
+
+/*void Canvas::mouseMoveEvent(QMouseEvent *event) {
+    float mouseX = static_cast<float>(event->pos().x() - 10) / scale + origin.x;
+    float mouseY = -static_cast<float>(event->pos().y() - height() + 10) / scale + origin.y;
+    emit updateSB(QString("Mouse position= (") + QString::number(mouseX, 'f', 1) + "," + QString::number(mouseY, 'f', 1) + ")");
+
+    for (auto &tri : triangles) {
+        tri.setHighlighted(tri.isInside(mouseX, mouseY));
+    }
+    update();
+}
+*/
+
 bool Canvas::handleTriangleClick(const Vector2D &clickPosition)
 {
     for (Triangle &tri : triangles) {
         if (tri.isInside(clickPosition)) {
             qDebug() << "Triangle clicked!";
-            tri.flippIt(triangles); // Attempt to flip the clicked triangle
+       //     tri.flippIt(triangles); // Attempt to flip the clicked triangle
             return true; // Triangle was clicked
         }
     }
@@ -469,4 +537,8 @@ Server* Canvas::findServerByName(const QString &name) {
         }
     }
     return nullptr;
+}
+void Canvas::setPolygon(const MyPolygon& polygon) {
+    myPolygon = polygon;
+    update();  // Optionally, trigger a repaint whenever a new polygon is set
 }

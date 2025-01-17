@@ -30,6 +30,9 @@ class Ui_MainWindow
 public:
     QAction *actionLoad;
     QAction *actionQuit;
+    QAction *actionshowCenters;
+    QAction *actionshowDelaunay;
+    QAction *actionshowCircles;
     QWidget *centralwidget;
     QHBoxLayout *horizontalLayout;
     Canvas *widget;
@@ -50,6 +53,15 @@ public:
         actionLoad->setObjectName("actionLoad");
         actionQuit = new QAction(MainWindow);
         actionQuit->setObjectName("actionQuit");
+        actionshowCenters = new QAction(MainWindow);
+        actionshowCenters->setObjectName("actionshowCenters");
+        actionshowCenters->setCheckable(true);
+        actionshowDelaunay = new QAction(MainWindow);
+        actionshowDelaunay->setObjectName("actionshowDelaunay");
+        actionshowDelaunay->setCheckable(true);
+        actionshowCircles = new QAction(MainWindow);
+        actionshowCircles->setObjectName("actionshowCircles");
+        actionshowCircles->setCheckable(true);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName("centralwidget");
         horizontalLayout = new QHBoxLayout(centralwidget);
@@ -87,7 +99,7 @@ public:
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
-        menubar->setGeometry(QRect(0, 0, 1268, 17));
+        menubar->setGeometry(QRect(0, 0, 1268, 21));
         menuFile = new QMenu(menubar);
         menuFile->setObjectName("menuFile");
         menuDelaunay = new QMenu(menubar);
@@ -102,6 +114,9 @@ public:
         menuFile->addAction(actionLoad);
         menuFile->addSeparator();
         menuFile->addAction(actionQuit);
+        menuDelaunay->addAction(actionshowCenters);
+        menuDelaunay->addAction(actionshowDelaunay);
+        menuDelaunay->addAction(actionshowCircles);
 
         retranslateUi(MainWindow);
 
@@ -116,6 +131,9 @@ public:
 #if QT_CONFIG(shortcut)
         actionQuit->setShortcut(QCoreApplication::translate("MainWindow", "Ctrl+Q", nullptr));
 #endif // QT_CONFIG(shortcut)
+        actionshowCenters->setText(QCoreApplication::translate("MainWindow", "showCenters", nullptr));
+        actionshowDelaunay->setText(QCoreApplication::translate("MainWindow", "showDelaunay", nullptr));
+        actionshowCircles->setText(QCoreApplication::translate("MainWindow", "showCircles", nullptr));
         label->setText(QCoreApplication::translate("MainWindow", "Drone list:", nullptr));
         menuFile->setTitle(QCoreApplication::translate("MainWindow", "File", nullptr));
         menuDelaunay->setTitle(QCoreApplication::translate("MainWindow", "compute", nullptr));

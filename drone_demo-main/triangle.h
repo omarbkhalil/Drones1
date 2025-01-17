@@ -13,11 +13,8 @@ private:
     // ----------------------------
     // Data Members
     // ----------------------------
-    Vector2D* ptr[3];      ///< array of 3 pointers to the vertices
     Vector2D  circumCenter;///< the center of the triangle (calculated by computeCircle)
     float     circumRadius;///< the radius of the circumCircle
-    QBrush    brush;       ///< current brush to draw the triangle
-    bool      isHighlited = false;  ///< whether triangle is highlighted
     bool      flippable   = false;  ///< whether triangle is flippable
 
     /**
@@ -38,6 +35,10 @@ private:
     void computeCircle();
 
 public:
+    Vector2D* ptr[3];      ///< array of 3 pointers to the vertices
+    QBrush    brush;       ///< current brush to draw the triangle
+    bool      isHighlited = false;  ///< whether triangle is highlighted
+
     // ----------------------------
     // Constructors
     // ----------------------------

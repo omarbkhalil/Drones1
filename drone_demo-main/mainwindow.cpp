@@ -89,16 +89,18 @@ void MainWindow::on_actionLoad_triggered()
 
     // Parse servers from JSON
     QJsonArray serversArray = jsonObj["servers"].toArray();
-    QVector<Vector2D> serverPositions; // Collect server positions for ear-clipping
+    MyPolygon polygon(serversArray.size()); // Assuming maximum of one vertex per server
+
     for (const QJsonValue &serverVal : serversArray) {
         QJsonObject serverObj = serverVal.toObject();
         QString name = serverObj["name"].toString();
         QString positionStr = serverObj["position"].toString();
         QStringList posList = positionStr.split(",");
         if (posList.size() == 2) {
-            Vector2D position(posList[0].toDouble(), posList[1].toDouble());
-            serverPositions.push_back(position);
-            servers.append(new Server(name, position, serverObj["color"].toString()));
+            float x = posList[0].toDouble();
+            float y = posList[1].toDouble();
+            polygon.addVertex(x, y);  // Directly add server coordinates as vertices to the polygon
+            servers.append(new Server(name, Vector2D(x, y), serverObj["color"].toString()));
         }
     }
 
@@ -106,11 +108,10 @@ void MainWindow::on_actionLoad_triggered()
     ui->widget->clear();
 
     // Add the server positions to the canvas
-    ui->widget->addPoints(serverPositions);
-
+    polygon.computeConvexHull();
+    polygon.earClippingTriangulate();
     // Generate triangles using ear-clipping
-    ui->widget->generateEarClippingTriangles();
-
+ui->widget->setPolygon(polygon);
     // Store servers in the Canvas
     ui->widget->setServers(servers);
 
@@ -187,7 +188,11 @@ void MainWindow::on_actionshowCenters_triggered(bool checked)
     ui->widget->showCenters = checked;
     ui->widget->update();
 }
-
+void MainWindow::on_actionshowCircles_triggered(bool checked)
+{
+    ui->widget->showCircles=checked;
+    update();
+}
 void MainWindow::on_actionshowDelaunay_triggered(bool checked)
 {
     // Toggle the boolean in the Canvas
@@ -195,7 +200,7 @@ void MainWindow::on_actionshowDelaunay_triggered(bool checked)
 
     // If turning it on, flip the triangles to enforce Delaunay
     if (checked) {
-        ui->widget->flippAll();
+       // ui->widget->flippAll();
         // You might want to do ui->widget->checkDelaunay() too
     }
 
