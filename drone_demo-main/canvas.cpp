@@ -366,7 +366,7 @@ void Canvas::paintEvent(QPaintEvent *)
     }
 
     // ----- Draw Drones -----
-    if (!mapDrones) {
+    if (mapDrones) {
         QPen penCol(Qt::DashDotDotLine);
         penCol.setColor(Qt::lightGray);
         penCol.setWidth(3);
