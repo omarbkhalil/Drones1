@@ -83,14 +83,14 @@ void Canvas::generateTriangles() {
 
     // Retrieve vertices and the count from the polygon
     int numVertices;
-     Vector2D* polygonVertices = polygon->getVertices(numVertices);
+    Vector2D* polygonVertices = polygon->getVertices(numVertices);
 
     // Create triangles using the first vertex and every subsequent pair of vertices
     if (numVertices >= 3) {
-         Vector2D* firstVertex = &polygonVertices[0];
+        Vector2D* firstVertex = &polygonVertices[0];
         for (int i = 1; i < numVertices - 1; ++i) {
-             // Explicitly specify the color to use the first constructor
-             triangles.append(Triangle(firstVertex, &polygonVertices[i], &polygonVertices[i + 1], Qt::yellow));
+            // Explicitly specify the color to use the first constructor
+            triangles.append(Triangle(firstVertex, &polygonVertices[i], &polygonVertices[i + 1], Qt::yellow));
         }
     }
 
@@ -176,7 +176,7 @@ QVector<const Vector2D *> Canvas::findOppositePointOfTriangle(Triangle &tri)
     return list;
 }
 
-/*void Canvas::flippAll()
+void Canvas::flippAll()
 {
     bool delaunay = false;
 
@@ -195,7 +195,7 @@ QVector<const Vector2D *> Canvas::findOppositePointOfTriangle(Triangle &tri)
     update();
 }
 
-*/
+
 /* void Canvas::loadMesh(const QString &filePath)
 {
     std::cout << "loadMesh called with file: " << filePath.toStdString() << std::endl;
@@ -267,7 +267,9 @@ int triangleCount = 0;
 }
 
 */
-void Canvas::generateEarClippingTriangles() {
+
+/*void Canvas::generateEarClippingTriangles()
+{
     // Clear old data
     triangles.clear();
     polygons.clear();
@@ -289,15 +291,9 @@ void Canvas::generateEarClippingTriangles() {
     // Perform ear-clipping triangulation
     polygon->earClippingTriangulate();
 
-    // Add internal points to the triangulation
-    QVector<Vector2D> internalPoints = {Vector2D(200, 200)}; // Replace with actual internal points
-    for (const Vector2D &internalPoint : internalPoints) {
-        polygon->addInternalPoint(internalPoint);
-    }
-
     // Extract triangles from the polygon and store them in Canvas::triangles
     for (const Triangle &tri : polygon->getTriangles()) {
-        triangles.append(tri);
+        triangles.append(tri); // Add each triangle to Canvas' triangle list
     }
 
     // Store the polygon for rendering
@@ -311,18 +307,16 @@ void Canvas::generateEarClippingTriangles() {
                  << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y << ")";
     }
 
-    qDebug() << "Ear-clipping triangulation with internal points generated.";
+    qDebug() << "Ear-clipping triangulation generated.";
 
     update();
 }
 
-
-
+*/
 void Canvas::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
-
-    // 1) fill background
+   // 1) fill background
     painter.fillRect(rect(), Qt::white);
 
     // 2) apply transformations
@@ -449,7 +443,8 @@ QPair<Vector2D, Vector2D> Canvas::getBox()
     return { infLeft, supRight };
 }
 
-void Canvas::mousePressEvent(QMouseEvent *event) {
+void Canvas::mousePressEvent(QMouseEvent *event)
+{
     if (!event) return;
 
     float canvasX = (event->pos().x() - 10) / scaleFactor + origin.x;
@@ -459,22 +454,38 @@ void Canvas::mousePressEvent(QMouseEvent *event) {
     qDebug() << "Mouse clicked at screen coordinates:" << event->pos().x() << event->pos().y();
     qDebug() << "Transformed to canvas coordinates:" << canvasX << canvasY;
 
-    // Check if a triangle was clicked
-    bool triangleClicked = handleTriangleClick(clickPosition);
-
-    if (!triangleClicked) {
-        // Add the clicked point as an internal point
-        qDebug() << "No triangle clicked. Adding internal point.";
-        myPolygon.addInternalPoint(clickPosition);
-
-        // Regenerate triangles
-        triangles.clear();
-        for (const Triangle &tri : myPolygon.getTriangles()) {
-            triangles.append(tri);
+    // Check if the click is inside any triangle
+    for (Triangle &tri : triangles) {
+        qDebug() << "Checking triangle with vertices: ("
+                 << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << "), ("
+                 << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << "), ("
+                 << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y << ")";
+        if (tri.isInside(clickPosition)) {
+            qDebug() << "Point is inside the triangle!";
+            tri.setHighlighted(tri.isInside(canvasX, canvasY));
+            //    tri.flippIt(triangles); // Attempt to flip the clicked triangle
+            update(); // Repaint after the change
+            return;
+        } else {
+            qDebug() << "Point is outside the triangle.";
         }
-
-        update(); // Redraw the canvas
     }
+
+    qDebug() << "No triangle clicked.";
+
+    // Original functionality: Handle drones if no triangle was clicked
+    auto it = mapDrones->begin();
+    while (it != mapDrones->end() && (*it)->getStatus() != Drone::landed) {
+        ++it;
+    }
+
+    if (it != mapDrones->end()) {
+        // Set the clicked position as the goal for the landed drone
+        (*it)->setGoalPosition(Vector2D(event->pos().x(), event->pos().y()));
+        (*it)->start();
+    }
+
+    update();
 }
 
 /*void Canvas::mouseMoveEvent(QMouseEvent *event) {
@@ -494,7 +505,7 @@ bool Canvas::handleTriangleClick(const Vector2D &clickPosition)
     for (Triangle &tri : triangles) {
         if (tri.isInside(clickPosition)) {
             qDebug() << "Triangle clicked!";
-       //     tri.flippIt(triangles); // Attempt to flip the clicked triangle
+            //     tri.flippIt(triangles); // Attempt to flip the clicked triangle
             return true; // Triangle was clicked
         }
     }

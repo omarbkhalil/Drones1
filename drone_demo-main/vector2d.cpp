@@ -27,3 +27,7 @@ double operator ^(const Vector2D &u,const Vector2D &v) {
 bool operator==(const Vector2D &u,const Vector2D &v) {
     return (u.x==v.x && u.y==v.y);
 }
+uint qHash(const Vector2D& key, uint seed) {
+    // Combine the x and y values into a single hash value
+    return qHash(QPair<double, double>(key.x, key.y), seed);
+}

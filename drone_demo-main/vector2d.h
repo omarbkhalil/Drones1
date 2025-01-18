@@ -5,7 +5,7 @@
  **/
 #ifndef VECTOR2D_H
 #define VECTOR2D_H
-
+#include <QHash>
 #include <cmath>
 
 class Vector2D {
@@ -61,6 +61,8 @@ public:
         x+=v.x;
         y+=v.y;
     }
+    uint qHash(const Vector2D& key, uint seed = 0);
+
     friend double operator *(const Vector2D&,const Vector2D&);
     friend const Vector2D operator *(double,const Vector2D&);
     friend const Vector2D operator +(const Vector2D&,const Vector2D&);

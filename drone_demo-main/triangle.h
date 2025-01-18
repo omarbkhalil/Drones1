@@ -42,6 +42,7 @@ public:
     // ----------------------------
     // Constructors
     // ----------------------------
+
     Triangle(Vector2D* v0, Vector2D* v1, Vector2D* v2, const QColor &color = Qt::yellow)
     {
         ptr[0] = v0;

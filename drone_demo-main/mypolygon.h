@@ -21,6 +21,19 @@ private:
     QVector<Triangle> triangles; ///< result of ear clipping
 
 public:
+    QVector<Vector2D> getHullVertices() const {
+        QVector<Vector2D> hullVertices;
+        // Assuming tabPts contains only the hull vertices after computeConvexHull is called
+        for (int i = 0; i < N; ++i) {
+            hullVertices.push_back(tabPts[i]);
+        }
+        return hullVertices;
+    }
+    int getVertexCount() const {
+        return N;
+    }
+    QVector<Vector2D> interiorPoints;
+
     /**
      * @brief MyPolygon constructor
      * @param p_Nmax maximum number of vertices
@@ -88,7 +101,9 @@ public:
      */
     void earClippingTriangulate();
 void computeConvexHull();
-    void addInternalPoint(const Vector2D &internalPoint);
+    void addInteriorPoint(const Vector2D& point);
+void integrateInteriorPoints();
+
 
 private:
     /**

@@ -99,19 +99,46 @@ void MainWindow::on_actionLoad_triggered()
         if (posList.size() == 2) {
             float x = posList[0].toDouble();
             float y = posList[1].toDouble();
-            polygon.addVertex(x, y);  // Directly add server coordinates as vertices to the polygon
-            servers.append(new Server(name, Vector2D(x, y), serverObj["color"].toString()));
+            Vector2D pos(x, y);
+            allPoints.append(pos);
+            servers.append(new Server(name, pos, serverObj["color"].toString()));
         }
     }
 
-    // Clear the canvas (removes old triangles, vertices, etc.)
+    // Compute convex hull
+   for (const Vector2D& point : allPoints) {
+        polygon.addVertex(point.x, point.y);
+    }
+    polygon.computeConvexHull();
+
+    // Clear the canvas
     ui->widget->clear();
 
-    // Add the server positions to the canvas
-    polygon.computeConvexHull();
+    // The points in polygon.tabPts are now the convex hull points
+    // Add non-hull points as interior points
+
+    // Assuming you can access hull points directly
+    QVector<Vector2D> hullPoints = polygon.getHullVertices();
+
+    for (const Vector2D& point : allPoints) {
+        bool isInterior = true;
+        for (const Vector2D& hullPoint : hullPoints) {
+            if (point == hullPoint) {
+                isInterior = false;
+                break;
+            }
+        }
+        if (isInterior) {
+            polygon.addInteriorPoint(point);
+        }
+    }
+
+
+    // Perform ear-clipping triangulation
     polygon.earClippingTriangulate();
-    // Generate triangles using ear-clipping
-ui->widget->setPolygon(polygon);
+    polygon.integrateInteriorPoints(); // Integrate interior points
+
+    ui->widget->setPolygon(polygon);
     // Store servers in the Canvas
     ui->widget->setServers(servers);
 
@@ -200,7 +227,7 @@ void MainWindow::on_actionshowDelaunay_triggered(bool checked)
 
     // If turning it on, flip the triangles to enforce Delaunay
     if (checked) {
-       // ui->widget->flippAll();
+        ui->widget->flippAll();
         // You might want to do ui->widget->checkDelaunay() too
     }
 

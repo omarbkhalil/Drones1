@@ -50,6 +50,7 @@ private:
 
      void loadJsonFile(const QString &filePath); // Method to load and parse JSON file
       QVector<Server *> servers; // List of servers
+     QVector<Vector2D> allPoints;
 
 };
 #endif // MAINWINDOW_H

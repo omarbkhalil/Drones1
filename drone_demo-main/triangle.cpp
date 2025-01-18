@@ -183,7 +183,7 @@ void Triangle::drawCircle(QPainter &painter) {
 }
 
 //-------------------------------------
-/*void Triangle::flippIt(QVector<Triangle> &triangles)
+void Triangle::flippIt(QVector<Triangle> &triangles)
 {
     qDebug() << "Attempting to flip a triangle.";
 
@@ -252,4 +252,4 @@ void Triangle::drawCircle(QPainter &painter) {
 
     qDebug() << "No flip performed.";
 }
-*/
+

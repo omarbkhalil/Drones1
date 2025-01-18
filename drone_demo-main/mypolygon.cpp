@@ -59,7 +59,7 @@ void MyPolygon::changeColor(const Vector2D &pt)
     qDebug() << "changeColor called with pt:" << pt.x << pt.y << "(not implemented)";
 }
 
- Vector2D *MyPolygon::getVertices(int &n)
+Vector2D *MyPolygon::getVertices(int &n)
 {
     n = N;
     return tabPts;
@@ -140,7 +140,8 @@ double MyPolygon::computeSignedArea() const
 // --------------------------------------------------
 // Ear clipping
 // --------------------------------------------------
-void MyPolygon::earClippingTriangulate() {
+void MyPolygon::earClippingTriangulate()
+{
     // Clear old data
     triangles.clear();
 
@@ -166,7 +167,13 @@ void MyPolygon::earClippingTriangulate() {
                 int iNext = (i + 1) % poly.size();
 
                 // Construct a triangle using pointers to existing vertices
-                Triangle tri(poly[iPrev], poly[i], poly[iNext], Qt::red);
+                Triangle tri(poly[iPrev], poly[i], poly[iNext], Qt::yellow);
+
+                // Set opposite points for flippable edges
+                if (!triangles.isEmpty()) {
+                    triangles.last().setOpposite(poly[iNext]);
+                    tri.setOpposite(poly[iPrev]);
+                }
 
                 triangles.push_back(tri);
 
@@ -185,50 +192,13 @@ void MyPolygon::earClippingTriangulate() {
 
     // Final triangle
     if (poly.size() == 3) {
-        Triangle tri(poly[0], poly[1], poly[2], Qt::red);
+        Triangle tri(poly[0], poly[1], poly[2], Qt::yellow);
         triangles.push_back(tri);
     }
 
     qDebug() << "Ear clipping done. Triangles formed:" << triangles.size();
 }
 
-// Add Internal Point and Subdivide Triangles
-void MyPolygon::addInternalPoint(const Vector2D &internalPoint) {
-    bool pointAdded = false;
-
-    for (int i = 0; i < triangles.size(); ++i) {
-        Triangle &tri = triangles[i];
-
-        // Check if the internal point is inside this triangle
-        if (tri.isInside(internalPoint)) {
-            qDebug() << "Internal point found inside triangle: "
-                     << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << " - "
-                     << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << " - "
-                     << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y;
-
-            // Get triangle vertices
-            Vector2D *A = tri.getVertexPtr(0);
-            Vector2D *B = tri.getVertexPtr(1);
-            Vector2D *C = tri.getVertexPtr(2);
-
-            // Remove the original triangle
-            triangles.removeAt(i);
-
-            // Add three new triangles
-            triangles.append(Triangle(A, B, new Vector2D(internalPoint), Qt::yellow));
-            triangles.append(Triangle(B, C, new Vector2D(internalPoint), Qt::yellow));
-            triangles.append(Triangle(C, A, new Vector2D(internalPoint), Qt::yellow));
-
-            pointAdded = true;
-            qDebug() << "Internal point added. Subdivided triangle into three.";
-            return;
-        }
-    }
-
-    if (!pointAdded) {
-        qDebug() << "Internal point not found inside any triangle. Debug further.";
-    }
-}
 
 
 // --------------------------------------------------
@@ -312,5 +282,66 @@ void MyPolygon::computeConvexHull() {
     for (int i = 0; i < N; ++i) {
         tabPts[i] = hull[i];
     }
+}
+
+void MyPolygon::addInteriorPoint(const Vector2D& point) {
+    interiorPoints.push_back(point);
+}
+
+void MyPolygon::integrateInteriorPoints() {
+    QVector<Triangle> newTriangles;
+
+    // Iterate through each original triangle
+    for (const Triangle& originalTri : triangles) {
+        QVector<Vector2D*> remainingPoints;
+        for (const Vector2D& pt : interiorPoints) {
+            remainingPoints.push_back(new Vector2D(pt));  // Copy all interior points initially
+        }
+
+        QVector<Triangle> tempTriangles;
+        tempTriangles.push_back(originalTri);  // Start with the original triangle
+
+        // Check each triangle formed so far against each interior point
+        bool splitOccurred;
+        do {
+            splitOccurred = false;
+            QVector<Triangle> currentPassTriangles;
+
+            for (Triangle& tri : tempTriangles) {
+                bool pointUsed = false;
+
+                for (int i = 0; i < remainingPoints.size(); ++i) {
+                    if (pointInTriangle(*remainingPoints[i], *tri.ptr[0], *tri.ptr[1], *tri.ptr[2])) {
+                        // Split the triangle into three new triangles
+                        Triangle t1(tri.ptr[0], tri.ptr[1], remainingPoints[i], Qt::yellow);
+                        Triangle t2(tri.ptr[1], tri.ptr[2], remainingPoints[i], Qt::yellow);
+                        Triangle t3(tri.ptr[2], tri.ptr[0], remainingPoints[i], Qt::yellow);
+
+                        currentPassTriangles.push_back(t1);
+                        currentPassTriangles.push_back(t2);
+                        currentPassTriangles.push_back(t3);
+
+                        remainingPoints.removeAt(i);  // Remove the point that was used to split
+                        pointUsed = true;
+                        splitOccurred = true;
+                        break;  // Break after modifying the vector
+                    }
+                }
+
+                if (!pointUsed) {
+                    currentPassTriangles.push_back(tri);  // Keep the triangle if no point found
+                }
+            }
+
+            tempTriangles = currentPassTriangles;  // Prepare for the next pass
+        } while (splitOccurred);
+
+        // Append all triangles that have been processed
+        newTriangles.append(tempTriangles);
+    }
+
+    // Replace old triangles with the new set
+    triangles = newTriangles;
+    qDebug() << "Updated triangulation with interior points. Total triangles: " << triangles.size();
 }
 
