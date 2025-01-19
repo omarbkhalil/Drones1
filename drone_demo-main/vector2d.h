@@ -7,6 +7,7 @@
 #define VECTOR2D_H
 #include <QHash>
 #include <cmath>
+#include <iostream>
 
 class Vector2D {
 public:
@@ -60,6 +61,20 @@ public:
     void operator+=(const Vector2D& v) {
         x+=v.x;
         y+=v.y;
+    }
+    friend std::ostream& operator<<(std::ostream& os, const Vector2D& v) {
+        os << "(" << v.x << ", " << v.y << ")";
+        return os;
+    }
+    Vector2D operator*(double scalar) const {
+        return Vector2D(x * scalar, y * scalar);
+    }
+    Vector2D operator/(double scalar) const {
+        if (scalar == 0) {
+            throw std::runtime_error("Attempt to divide vector by zero.");
+            // or return Vector2D(); to handle it more gracefully
+        }
+        return Vector2D(x / scalar, y / scalar);
     }
     uint qHash(const Vector2D& key, uint seed = 0);
 

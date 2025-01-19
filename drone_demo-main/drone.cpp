@@ -175,3 +175,9 @@ void Drone::addCollision(const Vector2D& B,float threshold) {
         showCollision=true;
     }
 }
+void Drone::setServerName(const QString& name) {
+    serverName = name; // Set the serverName member variable
+}
+QString Drone::getServerName() const {
+    return serverName; // Return the serverName member variable
+}

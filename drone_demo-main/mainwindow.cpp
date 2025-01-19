@@ -163,6 +163,7 @@ void MainWindow::on_actionLoad_triggered()
     }
 
     ui->widget->setMap(&mapDrones);
+    distributeDronesEqually();
 
     // Force a repaint
     repaint();
@@ -233,4 +234,18 @@ void MainWindow::on_actionshowDelaunay_triggered(bool checked)
     }
 
     ui->widget->update();
+}
+void MainWindow::distributeDronesEqually() {
+    int serverIndex = 0;
+    const int serverCount = servers.size();  // Assuming 'servers' is a QVector<Server*>
+
+    QMapIterator<QString, Drone*> i(mapDrones);
+    while (i.hasNext()) {
+        i.next();
+        Drone* drone = i.value();
+        // Assuming each server has a 'name' property
+        drone->setServerName(servers[serverIndex]->getName());
+        servers[serverIndex]->addDrone(drone);
+        serverIndex = (serverIndex + 1) % serverCount;  // Round-robin distribution
+    }
 }

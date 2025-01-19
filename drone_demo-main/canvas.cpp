@@ -493,21 +493,51 @@ void Canvas::paintEvent(QPaintEvent *) {
                  << "Position: (" << server->getPosition().x << "," << server->getPosition().y << ")";
     }
 
-    // Draw drones
     if (mapDrones) {
         QPen penCol(Qt::DashDotDotLine);
         penCol.setColor(Qt::lightGray);
         penCol.setWidth(3);
 
-        QRect rectIcon(-droneIconSize / 2, -droneIconSize / 2, droneIconSize, droneIconSize);
+        QRect rectIcon(-droneIconSize / 2,
+                       -droneIconSize / 2,
+                       droneIconSize,
+                       droneIconSize);
+
+        QRect rectCol(-droneCollisionDistance / 2,
+                      -droneCollisionDistance / 2,
+                      droneCollisionDistance,
+                      droneCollisionDistance);
 
         for (auto &drone : *mapDrones) {
+            QPoint serverPos(-1, -1); // Default to an invalid position
+            for (Server* server : servers) { // Assuming 'servers' is accessible here
+                if (server->getName() == drone->getServerName()) {
+                    // Manually convert from Vector2D to QPoint
+                    serverPos = QPoint(static_cast<int>(server->getPosition().x), static_cast<int>(server->getPosition().y));
+                    break; // Break once the matching server is found
+                }
+            }
+
+            if (serverPos.x() == -1 && serverPos.y() == -1) {
+                qDebug() << "No valid server found for drone:" << drone->getName();
+                continue; // Skip drawing this drone if no server is found
+            }
+
             painter.save();
-            painter.translate(drone->getPosition().x, drone->getPosition().y);
+            painter.translate(serverPos.x(), serverPos.y());
             painter.rotate(drone->getAzimut());
             painter.drawImage(rectIcon, droneImg);
+
+            // Draw collision circle if needed
+            if (drone->hasCollision()) {
+                painter.setPen(penCol);
+                painter.setBrush(Qt::NoBrush);
+                painter.drawEllipse(rectCol);
+            }
+
             painter.restore();
         }
+
     }
 }
 

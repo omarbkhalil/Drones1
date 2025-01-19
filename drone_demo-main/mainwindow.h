@@ -26,6 +26,8 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    void distributeDronesEqually();
+
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 

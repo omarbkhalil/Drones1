@@ -15,6 +15,7 @@ class Drone : public QWidget {
 
     Q_OBJECT
 public:
+
     const double maxSpeed=50; ///< max speed in pixels per second
     const double maxPower=200; ///< max power of drone motors
     const double takeoffSpeed=2.5; ///< unit/s
@@ -24,6 +25,8 @@ public:
     const double chargingSpeed=10;   ///< speed of charging (power/s)
     const double powerConsumption=5; ///< speed of consumption (power/s)
     enum droneStatus { landed,takeoff,landing,hovering,turning,flying};
+     void setServerName(const QString& name);
+    QString getServerName() const;
     /**
      * @brief Drone constructor
      * @param p_name name of the drone
@@ -122,6 +125,8 @@ private:
     double azimut;            ///< rotation angle of the drone
     QImage compasImg,stopImg,takeoffImg,landingImg;
     bool showCollision;       ///< true if a collision is detected
+    QString serverName; // Example member variable
+
 };
 
 #endif // DRONE_H
