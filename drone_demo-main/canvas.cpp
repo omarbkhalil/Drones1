@@ -313,90 +313,202 @@ int triangleCount = 0;
 }
 
 */
-void Canvas::paintEvent(QPaintEvent *)
-{
+
+QVector<Vector2D> Canvas::computeCircumcenters() {
+    QVector<Vector2D> circumcenters;
+
+    for (const Triangle &triangle : triangles) {
+        circumcenters.push_back(triangle.getCircleCenter());
+    }
+
+    return circumcenters;
+}
+
+QMap<QPair<const Vector2D*, const Vector2D*>, QVector<const Triangle*>> Canvas::mapEdgesToTriangles() {
+    QMap<QPair<const Vector2D*, const Vector2D*>, QVector<const Triangle*>> edgeToTriangles;
+
+    for (const Triangle &triangle : triangles) {
+        for (int i = 0; i < 3; ++i) {
+            const Vector2D* v1 = triangle.getVertexPtr(i);
+            const Vector2D* v2 = triangle.getVertexPtr((i + 1) % 3);
+
+            // Ensure consistent edge ordering
+            auto edge = qMakePair(qMin(v1, v2), qMax(v1, v2));
+            edgeToTriangles[edge].append(&triangle);
+        }
+    }
+
+    return edgeToTriangles;
+}
+
+QVector<QLineF> Canvas::generateVoronoiEdges() {
+    QVector<QLineF> voronoiEdges;
+    auto edgeToTriangles = mapEdgesToTriangles();
+
+
+    for (auto it = edgeToTriangles.begin(); it != edgeToTriangles.end(); ++it) {
+        const QVector<const Triangle*> &trianglesSharingEdge = it.value();
+
+        // If two triangles share the edge, connect their circumcenters
+        if (trianglesSharingEdge.size() == 2) {
+            const Vector2D center1 = trianglesSharingEdge[0]->getCircleCenter();
+            const Vector2D center2 = trianglesSharingEdge[1]->getCircleCenter();
+            voronoiEdges.append(QLineF(center1.x, center1.y, center2.x, center2.y));
+        }
+    }
+
+    return voronoiEdges;
+}
+QMap<Server*, QVector<QLineF>> Canvas::generateVoronoiCells() {
+    QMap<Server*, QVector<QLineF>> serverVoronoiCells;
+    auto edgeToTriangles = mapEdgesToTriangles();
+  qDebug() << "Generating Voronoi cells...";
+    // Debug servers
+    qDebug() << "Servers:";
+    for (const Server* server : servers) {
+        qDebug() << server->getName() << "at position:" << server->getPosition().x << server->getPosition().y;
+    }
+
+    // Debug triangles
+    qDebug() << "Triangles:";
+    for (const Triangle &tri : triangles) {
+        qDebug() << "Triangle vertices:"
+                 << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << " | "
+                 << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << " | "
+                 << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y;
+    }
+
+    for (Server* server : servers) {
+        QVector<QLineF> voronoiEdges;
+
+        // Find all triangles connected to the server's position
+        for (const Triangle &triangle : triangles) {
+            if (triangle.contains(server->getPosition())) {
+                const Vector2D center = triangle.getCircleCenter();
+
+                qDebug() << "Triangle associated with server:" << server->getName()
+                         << "Triangle center:" << center.x << center.y;
+
+                // Add edges connecting this circumcenter to neighboring circumcenters
+                for (int i = 0; i < 3; ++i) {
+                    const Vector2D* v1 = triangle.getVertexPtr(i);
+                    const Vector2D* v2 = triangle.getVertexPtr((i + 1) % 3);
+                    auto edge = qMakePair(qMin(v1, v2), qMax(v1, v2));
+
+                    if (edgeToTriangles.contains(edge) && edgeToTriangles[edge].size() == 2) {
+                        const Triangle* neighbor = edgeToTriangles[edge][0] == &triangle
+                                                       ? edgeToTriangles[edge][1]
+                                                       : edgeToTriangles[edge][0];
+
+                        const Vector2D neighborCenter = neighbor->getCircleCenter();
+                        voronoiEdges.append(QLineF(center.x, center.y, neighborCenter.x, neighborCenter.y));
+
+                        qDebug() << "Edge added from (" << center.x << "," << center.y
+                                 << ") to (" << neighborCenter.x << "," << neighborCenter.y << ")";
+                    }
+                }
+            }
+        }
+
+        serverVoronoiCells[server] = voronoiEdges;
+    }
+
+    qDebug() << "Voronoi cells generated for" << serverVoronoiCells.size() << "servers.";
+    return serverVoronoiCells;
+}
+
+
+
+void Canvas::paintEvent(QPaintEvent *) {
     QPainter painter(this);
-   // 1) fill background
+
+    // 1) Fill background
     painter.fillRect(rect(), Qt::white);
 
-    // 2) apply transformations
+    // 2) Apply transformations
     painter.translate(10, 10);
     painter.scale(scaleFactor, scaleFactor);
     painter.translate(-origin.x, -origin.y);
+    qDebug() << "paintEvent triggered. Drawing Voronoi cells...";
 
-    myPolygon.draw(painter, true);  // Assuming draw handles its own brush and pen settings
+    // Draw the polygon
+    myPolygon.draw(painter, true);
 
-
-    // ----- Draw Centers (if toggled) -----
+    // Draw centers if toggled
     if (showCenters) {
         QPen centerPen(Qt::red);
         centerPen.setWidth(4);
         painter.setPen(centerPen);
         painter.setBrush(Qt::NoBrush);
 
-        // Optionally, also for polygons' ear-clipped triangles
-        for (auto poly : polygons) {
-            const auto &polyTris = poly->getTriangles(); // if getTriangles() is a const accessor
-            for (auto &t : polyTris) {
-                Vector2D c = t.getCircleCenter();
-                painter.drawEllipse(QPointF(c.x, c.y), 3, 3);
-            }
+        for (const auto &tri : triangles) {
+            Vector2D center = tri.getCircleCenter();
+            painter.drawEllipse(QPointF(center.x, center.y), 3, 3);
         }
     }
-    if (showCircles) {
-        for (auto &tri : triangles) {
-            if (tri.isHighlighted()) tri.drawCircle(painter);
+
+    auto voronoiCells = generateVoronoiCells();
+
+    // Debug raw edges
+    qDebug() << "Raw Voronoi edges:";
+    for (auto it = voronoiCells.begin(); it != voronoiCells.end(); ++it) {
+        for (const QLineF &edge : it.value()) {
+            qDebug() << "Edge from (" << edge.x1() << "," << edge.y1() << ") to ("
+                     << edge.x2() << "," << edge.y2() << ")";
         }
     }
-    // ----- Draw Servers -----
+
+    // Debug transformed edges
+    QTransform matrix = painter.worldTransform();
+    qDebug() << "Transformed Voronoi edges:";
+    for (auto it = voronoiCells.begin(); it != voronoiCells.end(); ++it) {
+        for (const QLineF &edge : it.value()) {
+            QPointF p1 = matrix.map(QPointF(edge.x1(), edge.y1()));
+            QPointF p2 = matrix.map(QPointF(edge.x2(), edge.y2()));
+            qDebug() << "Edge from (" << p1.x() << "," << p1.y() << ") to ("
+                     << p2.x() << "," << p2.y() << ")";
+        }
+    }
+
+    int voronoiCellCount = 0;
+    for (auto it = voronoiCells.begin(); it != voronoiCells.end(); ++it) {
+        for (const QLineF &edge : it.value()) {
+            painter.drawLine(edge);  // Draw the line
+            voronoiCellCount++;
+        }
+    }
+
+    qDebug() << "Total Voronoi edges rendered:" << voronoiCellCount;
+    // Draw servers
     QPen serverPen(Qt::blue);
     serverPen.setWidth(5);
     painter.setPen(serverPen);
 
     for (const Server *server : servers) {
-        painter.drawEllipse(QPointF(server->getPosition().x,
-                                    server->getPosition().y),
-                            5, 5);
+        painter.drawEllipse(QPointF(server->getPosition().x, server->getPosition().y), 5, 5);
         painter.setPen(Qt::black);
-        painter.drawText(QPointF(server->getPosition().x + 10,
-                                 server->getPosition().y - 10),
-                         server->getName());
+        painter.drawText(QPointF(server->getPosition().x + 10, server->getPosition().y - 10), server->getName());
         painter.setPen(serverPen);
+        qDebug() << "Server added:" << server->getName()
+                 << "Position: (" << server->getPosition().x << "," << server->getPosition().y << ")";
     }
 
-    // ----- Draw Drones -----
+    // Draw drones
     if (mapDrones) {
         QPen penCol(Qt::DashDotDotLine);
         penCol.setColor(Qt::lightGray);
         penCol.setWidth(3);
 
-        QRect rectIcon(-droneIconSize / 2,
-                       -droneIconSize / 2,
-                       droneIconSize,
-                       droneIconSize);
-
-        QRect rectCol(-droneCollisionDistance / 2,
-                      -droneCollisionDistance / 2,
-                      droneCollisionDistance,
-                      droneCollisionDistance);
+        QRect rectIcon(-droneIconSize / 2, -droneIconSize / 2, droneIconSize, droneIconSize);
 
         for (auto &drone : *mapDrones) {
             painter.save();
             painter.translate(drone->getPosition().x, drone->getPosition().y);
             painter.rotate(drone->getAzimut());
             painter.drawImage(rectIcon, droneImg);
-
-            // collision circle
-            if (drone->hasCollision()) {
-                painter.setPen(penCol);
-                painter.setBrush(Qt::NoBrush);
-                painter.drawEllipse(rectCol);
-            }
-
             painter.restore();
         }
     }
-
 }
 
 void Canvas::resizeEvent(QResizeEvent *)

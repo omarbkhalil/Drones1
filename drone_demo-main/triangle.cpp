@@ -57,9 +57,37 @@ bool Triangle::hasEdge(Vector2D A, Vector2D B) const
 }
 
 //-------------------------------------
-bool Triangle::contains(const Vector2D &M)
-{
-    return (M == *ptr[0]) || (M == *ptr[1]) || (M == *ptr[2]);
+bool Triangle::contains(const Vector2D &M) const {
+    // Check if the point is one of the vertices
+    if ((M == *ptr[0]) || (M == *ptr[1]) || (M == *ptr[2])) {
+        return true;
+    }
+
+    // Check if the point lies on any of the edges
+    if (isOnTheEdge(M, *ptr[0], *ptr[1]) ||
+        isOnTheEdge(M, *ptr[1], *ptr[2]) ||
+        isOnTheEdge(M, *ptr[2], *ptr[0])) {
+        return true;
+    }
+
+    return false;
+}
+
+bool Triangle::isOnTheEdge(const Vector2D &P, const Vector2D &A, const Vector2D &B) const {
+    // Check if P is collinear with A and B and lies within the segment [A, B]
+    Vector2D AB = B - A;
+    Vector2D AP = P - A;
+
+    // Check collinearity using cross product
+    if (std::abs(AB.x * AP.y - AB.y * AP.x) > 1e-6) {
+        return false;
+    }
+
+    // Check if the point is within the segment
+    float dotProduct = AP.x * AB.x + AP.y * AB.y;
+    float squaredLengthAB = AB.x * AB.x + AB.y * AB.y;
+
+    return dotProduct >= 0 && dotProduct <= squaredLengthAB;
 }
 
 //-------------------------------------

@@ -106,7 +106,7 @@ void MainWindow::on_actionLoad_triggered()
     }
 
     // Compute convex hull
-   for (const Vector2D& point : allPoints) {
+    for (const Vector2D& point : allPoints) {
         polygon.addVertex(point.x, point.y);
     }
     polygon.computeConvexHull();
@@ -116,8 +116,6 @@ void MainWindow::on_actionLoad_triggered()
 
     // The points in polygon.tabPts are now the convex hull points
     // Add non-hull points as interior points
-
-    // Assuming you can access hull points directly
     QVector<Vector2D> hullPoints = polygon.getHullVertices();
 
     for (const Vector2D& point : allPoints) {
@@ -133,14 +131,16 @@ void MainWindow::on_actionLoad_triggered()
         }
     }
 
-
     // Perform ear-clipping triangulation
     polygon.earClippingTriangulate();
     polygon.integrateInteriorPoints(); // Integrate interior points
 
     ui->widget->setPolygon(polygon);
-    // Store servers in the Canvas
     ui->widget->setServers(servers);
+
+    // Generate Voronoi cells and repaint
+    ui->widget->generateVoronoiCells(); // Ensure this method exists in Canvas and updates its internal state
+    ui->widget->update();
 
     // Parse drones from JSON
     QJsonArray dronesArray = jsonObj["drones"].toArray();
@@ -167,6 +167,7 @@ void MainWindow::on_actionLoad_triggered()
     // Force a repaint
     repaint();
 }
+
 
 void MainWindow::update()
 {

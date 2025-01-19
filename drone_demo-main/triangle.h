@@ -144,7 +144,8 @@ public:
     inline bool isInside(float x, float y) { return isInside(Vector2D(x, y)); }
 
     bool hasEdge(Vector2D A, Vector2D B) const;
-    bool contains(const Vector2D &M);
+    bool contains(const Vector2D &M) const;
+    bool isOnTheEdge(const Vector2D &P, const Vector2D &A, const Vector2D &B) const ;
 
     /**
      * @brief circleContains

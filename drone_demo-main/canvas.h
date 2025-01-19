@@ -59,6 +59,11 @@ public:
 
     //void loadMesh(const QString &filePath);
     Server* findServerByName(const QString& name) ;
+
+    QVector<Vector2D> computeCircumcenters(); ///< Compute circumcenters of all triangles
+    QMap<QPair<const Vector2D*, const Vector2D*>, QVector<const Triangle*>> mapEdgesToTriangles(); ///< Map edges to neighboring triangles
+    QVector<QLineF> generateVoronoiEdges(); ///< Generate Voronoi edges
+    QMap<Server*, QVector<QLineF>> generateVoronoiCells(); ///< Generate Vor
 protected:
     void paintEvent(QPaintEvent *) override;
     void mousePressEvent(QMouseEvent *event) override;
