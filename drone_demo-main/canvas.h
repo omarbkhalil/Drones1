@@ -39,9 +39,12 @@ public:
     inline int getSizeofT() { return triangles.size();}
 
     //void addTriangle(int id0, int id1, int id2, const QColor &color) ;
-    QVector<const Vector2D*> findOppositePointOfTrianglesWithEdgeCommon(const Triangle &tri);
+    QVector<const Vector2D*> findOppositePointOfTrianglesWithEdgeCommon(Triangle tri);
     QVector<const Vector2D *> findOppositePointOfTriangle(Triangle &tri);
-
+    const Vector2D* findOppositeVertex(const Triangle& tri, const Triangle& other, const QVector<const Vector2D*>& commonVertices) ;
+    void flipEdge(Triangle& tri1, Triangle& tri2) ;
+    bool isFlippableEdge(const Triangle& tri1, const Triangle& tri2, QVector<const Vector2D*>& commonVertices) ;     void findOppositePointOfSharedEdgeD(const Triangle &tri, const Triangle &otherTri) ;
+    QVector<const Vector2D*> findCommonEdgeVertices(const Triangle& tri, const Triangle& otherTri) ;
     void addTriangle(int id0, int id1, int id2) ;
     void addTriangle(const Vector2D &v1, const Vector2D &v2, const Vector2D &v3, const QColor &color) ;
 
@@ -60,6 +63,7 @@ public:
     //void loadMesh(const QString &filePath);
     Server* findServerByName(const QString& name) ;
 
+    void drawTrianglesWithOppositeVerticesCheck() ;
     QVector<Vector2D> computeCircumcenters(); ///< Compute circumcenters of all triangles
     QMap<QPair<const Vector2D*, const Vector2D*>, QVector<const Triangle*>> mapEdgesToTriangles(); ///< Map edges to neighboring triangles
     QVector<QLineF> generateVoronoiEdges(); ///< Generate Voronoi edges

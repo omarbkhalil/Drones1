@@ -162,7 +162,7 @@ QVector<const Vector2D *> Canvas::findOppositePointOfTriangle(Triangle &tri)
 {
     QVector<const Vector2D *> list;
 
-    for (auto &otherTri : triangles) {
+    for (auto &otherTri : Triangle::triangles) {
         // Skip self
         if (&otherTri == &tri) continue;
 
@@ -199,6 +199,35 @@ QVector<const Vector2D *> Canvas::findOppositePointOfTriangle(Triangle &tri)
     return list;
 }
 
+const Vector2D* findOppositePointOfSharedEdge(const Triangle &tri, const Triangle &otherTri) {
+    Vector2D *commonA = nullptr;
+    Vector2D *commonB = nullptr;
+    int commonCount = 0;
+
+    // Find common vertices
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (*tri.getVertexPtr(i) == *otherTri.getVertexPtr(j)) {
+                if (commonCount == 0) commonA = tri.getVertexPtr(i);
+                else if (commonCount == 1) commonB = tri.getVertexPtr(i);
+                commonCount++;
+                if (commonCount == 2) break; // Break early if two common vertices found
+            }
+        }
+        if (commonCount == 2) break; // Break early
+    }
+
+    if (commonCount == 2) {
+        // Find the non-common vertex in otherTri
+        for (int i = 0; i < 3; i++) {
+            const Vector2D *v = otherTri.getVertexPtr(i);
+            if (v != commonA && v != commonB) {
+                return v;  // Return the opposite vertex
+            }
+        }
+    }
+    return nullptr; // No shared edge or error
+}
 
 
 /* void Canvas::loadMesh(const QString &filePath)
@@ -333,7 +362,7 @@ int triangleCount = 0;
 QMap<QPair<const Vector2D*, const Vector2D*>, QVector<const Triangle*>> Canvas::mapEdgesToTriangles() {
     QMap<QPair<const Vector2D*, const Vector2D*>, QVector<const Triangle*>> edgeToTriangles;
 
-    for (const Triangle &triangle : triangles) {
+    for (const Triangle &triangle : Triangle::triangles) {
         for (int i = 0; i < 3; ++i) {
             const Vector2D* v1 = triangle.getVertexPtr(i);
             const Vector2D* v2 = triangle.getVertexPtr((i + 1) % 3);
@@ -439,6 +468,7 @@ void Canvas::paintEvent(QPaintEvent *) {
     // Draw the polygon
     for (const Triangle &triangle : Triangle::triangles) {
         triangle.draw(painter);  // Call the draw method for each triangle
+
     }
     // Draw centers if toggled
     if (showCenters) {
@@ -453,7 +483,7 @@ void Canvas::paintEvent(QPaintEvent *) {
         }
     }
     if (showCircles) {
-        for (auto &tri : triangles) {
+        for (auto &tri : Triangle::triangles) {
             if (tri.isHighlighted()) tri.drawCircle(painter);
         }
     }
@@ -617,7 +647,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         if (tri.isInside(clickPosition)) {
             qDebug() << "Point is inside the triangle!";
             tri.setHighlighted(tri.isInside(canvasX, canvasY));
-          //     tri.flippIt(); // Attempt to flip the clicked triangle
+              //tri.flippIt(); // Attempt to flip the clicked triangle
             update(); // Repaint after the change
             return;
         } else {
@@ -647,8 +677,8 @@ bool Canvas::handleTriangleClick(const Vector2D &clickPosition)
     for (Triangle &tri :  Triangle::triangles) {
         if (tri.isInside(clickPosition)) {
             qDebug() << "Triangle clicked!";
-               tri.flippIt(); // Attempt to flip the clicked triangle
-            return true; // Triangle was clicked
+               //tri.flippIt(); // Attempt to flip the clicked triangle
+          //  return true; // Triangle was clicked
         }
     }
     qDebug() << "No triangle clicked.";
@@ -672,42 +702,17 @@ void Canvas::setPolygon(const MyPolygon& polygon) {
     myPolygon = polygon;
     update();  // Optionally, trigger a repaint whenever a new polygon is set
 }
-void Canvas::flippAll()
-{
-    qDebug() << "Entered flippAll.";
+void Canvas::flippAll(){
+    while(!checkDelaunay()){
+        auto it  = Triangle::triangles.begin();
+        while( it !=Triangle::triangles.end() && !(*it).isFlippable()){
+            it++;
+        }
+        if(it!=Triangle::triangles.end()){
+            (*it).flippIt(triangles);
 
-    // Ensure allVertices is populated dynamically from triangles
-    QVector<Vector2D> allVertices;
-    for (const Triangle &tri : Triangle::triangles) {
-        for (int i = 0; i < 3; i++) {
-            if (!allVertices.contains(*tri.getVertexPtr(i))) {
-                allVertices.append(*tri.getVertexPtr(i));
-            }
+        }else{
+            qDebug() << "issue";
         }
     }
-
-    bool delaunay = false;
-
-    while (!delaunay) {
-        delaunay = true;
-
-        for (Triangle &tri : Triangle::triangles) {
-            qDebug() << "Checking triangle with vertices: ("
-                     << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << "), ("
-                     << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << "), ("
-                     << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y << ")";
-
-            // Use dynamically populated allVertices for Delaunay check
-            if (!tri.checkDelaunay(allVertices)) {
-                qDebug() << "Triangle does not satisfy Delaunay. Attempting to flip.";
-                tri.flippIt();  // Attempt to flip the triangle
-                delaunay = false;  // Continue the process
-            }
-        }
-    }
-
-    qDebug() << "All triangles are now Delaunay.";
-    update();  // Trigger a repaint of the canvas
 }
-
-

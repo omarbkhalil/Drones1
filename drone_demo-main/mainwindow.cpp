@@ -104,6 +104,8 @@ void MainWindow::on_actionLoad_triggered()
             servers.append(new Server(name, pos, serverObj["color"].toString()));
         }
     }
+    ui->widget->clear();
+
 
     // Compute convex hull
     for (const Vector2D& point : allPoints) {
@@ -112,7 +114,6 @@ void MainWindow::on_actionLoad_triggered()
     polygon.computeConvexHull();
 
     // Clear the canvas
-    ui->widget->clear();
 
     // The points in polygon.tabPts are now the convex hull points
     // Add non-hull points as interior points
@@ -135,6 +136,7 @@ void MainWindow::on_actionLoad_triggered()
     // Perform ear-clipping triangulation
     polygon.earClippingTriangulate();
     polygon.integrateInteriorPoints(); // Integrate interior points
+   //ui->widget->flippAll();
      ui->widget->setPolygon(polygon);
      ui->widget->setServers(servers);
 
@@ -215,11 +217,13 @@ void MainWindow::on_actionshowCenters_triggered(bool checked)
 {
     // Toggle the boolean in the Canvas
     ui->widget->showCenters = checked;
+    ui->widget->flippAll();
+
     ui->widget->update();
 }
 void MainWindow::on_actionshowCircles_triggered(bool checked)
 {
-ui->widget->flippAll();
+ui->widget->showCircles=checked;
     update();
 }
 void MainWindow::on_actionshowDelaunay_triggered(bool checked)

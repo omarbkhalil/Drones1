@@ -96,9 +96,7 @@ bool Triangle::isOnTheEdge(const Vector2D &P, const Vector2D &A, const Vector2D 
 }
 
 //-------------------------------------
-bool Triangle::circleContains(const Vector2D *M)
-{
-    // Build a 3x3 determinant
+bool Triangle::circleContains(const Vector2D *M){
     Matrix33 mat;
     Vector2D *A = ptr[0];
     Vector2D *B = ptr[1];
@@ -106,32 +104,29 @@ bool Triangle::circleContains(const Vector2D *M)
 
     mat.m[0][0] = A->x - M->x;
     mat.m[0][1] = A->y - M->y;
-    mat.m[0][2] = (A->x*A->x - M->x*M->x) + (A->y*A->y - M->y*M->y);
+    mat.m[0][2] = ((A->x * A->x) - (M->x * M->x)) + ((A->y * A->y) - (M->y * M->y));
 
     mat.m[1][0] = B->x - M->x;
-    mat.m[1][1] = B->y - M->y;
-    mat.m[1][2] = (B->x*B->x - M->x*M->x) + (B->y*B->y - M->y*M->y);
+    mat.m[1][1] = B->y - M->y ;
+    mat.m[1][2] = ((B->x * B->x) - (M->x * M->x)) + ((B->y * B->y) - (M->y * M->y));
 
-    mat.m[2][0] = C->x - M->x;
-    mat.m[2][1] = C->y - M->y;
-    mat.m[2][2] = (C->x*C->x - M->x*M->x) + (C->y*C->y - M->y*M->y);
+    mat.m[2][0] =   C->x - M->x;
+    mat.m[2][1] =  C->y - M->y ;
+    mat.m[2][2] = ((C->x * C->x) - (M->x * M->x)) + ((C->y * C->y) - (M->y * M->y));
 
-    return (mat.determinant() <= 0);
+    return mat.determinant()<=0;
 }
 
 //-------------------------------------
 
 
 //-------------------------------------
-void Triangle::updateVertices(Vector2D *_A, Vector2D *_B, Vector2D *_C)
-{
+void Triangle::updateVertices(Vector2D* _A, Vector2D* _B, Vector2D* _C){
     ptr[0] = _A;
     ptr[1] = _B;
     ptr[2] = _C;
-    computeCircle();
 }
 
-//-------------------------------------
 void Triangle::draw(QPainter &painter) const{
     qDebug() << "Entered Triangle::draw";
 
@@ -210,7 +205,7 @@ void Triangle::drawCircle(QPainter &painter) {
 }
 
 //-------------------------------------
-void Triangle::flippIt() {
+/*void Triangle::flippIt() {
     qDebug() << "Attempting to flip a triangle.";
 
     QVector<const Vector2D*> commonEdges;
@@ -279,7 +274,7 @@ void Triangle::flippIt() {
 
     qDebug() << "No flip performed.";
 }
-
+*/
 bool Triangle:: checkDelaunay(const QVector<Vector2D> &tabVertices) {
     auto it = tabVertices.begin();
     bool isOk = true;
@@ -316,5 +311,68 @@ bool Triangle:: checkDelaunay(const QVector<Vector2D> &tabVertices) {
     return isDelaunay;
 
 
+}
+
+void Triangle::flippIt(QVector<Triangle> triangles) {
+    QVector<const Vector2D*> commonEdges;
+    qDebug() << "OPPOSITE : " << (this->getOpposite());
+
+    bool flipCompleted = false; // Flag to control when the flip is done
+    int i = 0;
+    int edgeIndex = 0;
+
+    // Iterate over all neighboring triangles using while loop
+    while (i < triangles.size() && !flipCompleted) {
+        Triangle tri = triangles[i];
+
+        // Check if triangle meets flippable criteria
+        if (tri.isFlippable() && &tri != this && tri.contains(this->getOpposite())){
+            // Check each of the 3 edges to find a common edge
+
+            // Use nested while loop to check edges
+            while (edgeIndex < 3 && !flipCompleted) {
+                if (edgeIndex == 0 && tri.hasEdge(this->getVertexPtr(1), this->getVertexPtr(0))) {
+                    // Common edge is (1, 0)
+                    commonEdges = {getVertexPtr(1), getVertexPtr(0)};
+                } else if (edgeIndex == 1 && tri.hasEdge(getVertexPtr(2), getVertexPtr(1))) {
+                    // Common edge is (2, 1)
+                    commonEdges = {getVertexPtr(2), getVertexPtr(1)};
+                } else if (edgeIndex == 2 && tri.hasEdge(getVertexPtr(0), getVertexPtr(2))) {
+                    // Common edge is (0, 2)
+                    commonEdges = {getVertexPtr(0), getVertexPtr(2)};
+                }
+
+                // If a common edge is found, perform the flip
+                if (!commonEdges.isEmpty()) {
+                    this->updateVertices(
+                        this->getOpposite(),
+                        const_cast<Vector2D*>(commonEdges[0]),
+                        tri.getOpposite()
+                        );
+
+                    tri.updateVertices(
+                        tri.getOpposite(),
+                        const_cast<Vector2D*>(commonEdges[1]),
+                        this->getOpposite()
+                        );
+
+                    this->computeCircle();
+                    tri.computeCircle();
+                    flipCompleted = true; // Set flag to indicate flip is done
+                }
+
+                edgeIndex++;
+            }
+        }
+
+        i++;
+    }
+
+    // If no flip occurred, still recompute the circle
+    if (!flipCompleted) {
+        this->computeCircle();
+    }
+
+    qDebug() << "FlippIt ended";
 }
 

@@ -32,7 +32,6 @@ private:
      * @brief computeCircle - compute the circum circle from the three vertices.
      * Sets `circumCenter` and `circumRadius`.
      */
-    void computeCircle();
 
 public:
     Vector2D* ptr[3];      ///< array of 3 pointers to the vertices
@@ -147,6 +146,7 @@ public:
     {
         isHighlited = v;
     }
+    void computeCircle();
 
     inline bool isHighlighted() const
     {
@@ -184,7 +184,7 @@ public:
     bool hasEdge(Vector2D A, Vector2D B) const;
     bool contains(const Vector2D &M) const;
     bool isOnTheEdge(const Vector2D &P, const Vector2D &A, const Vector2D &B) const ;
-
+    void flippIt(QVector<Triangle> triangles) ;
     /**
      * @brief circleContains
      * @return true if M is inside or on this triangle's circumcircle
@@ -202,9 +202,7 @@ public:
      * @brief updateVertices
      * Reassign the 3 vertex pointers. Typically used by flipping operations.
      */
-    void updateVertices(Vector2D *_A, Vector2D *_B, Vector2D *_C);
-
-    // ----------------------------
+    void updateVertices( Vector2D *_A,  Vector2D *_B,  Vector2D *_C);    // ----------------------------
     // Drawing
     // ----------------------------
     void draw(QPainter &painter) const;
