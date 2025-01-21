@@ -615,17 +615,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
     qDebug() << "No triangle clicked.";
 
-    // Original functionality: Handle drones if no triangle was clicked
-    auto it = mapDrones->begin();
-    while (it != mapDrones->end() && (*it)->getStatus() != Drone::landed) {
-        ++it;
-    }
 
-    if (it != mapDrones->end()) {
-        // Set the clicked position as the goal for the landed drone
-        (*it)->setGoalPosition(Vector2D(event->pos().x(), event->pos().y()));
-        (*it)->start();
-    }
 
     update();
 }
