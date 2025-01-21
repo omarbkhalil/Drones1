@@ -201,6 +201,7 @@ void MyPolygon::earClippingTriangulate()
 
 
 
+
 // --------------------------------------------------
 // Checks if poly[i] is an ear
 // --------------------------------------------------
@@ -343,5 +344,8 @@ void MyPolygon::integrateInteriorPoints() {
     // Replace old triangles with the new set
     triangles = newTriangles;
     qDebug() << "Updated triangulation with interior points. Total triangles: " << triangles.size();
+
+    // Pass the updated triangles to the Triangle class
+    Triangle::setTriangles(triangles);
 }
 

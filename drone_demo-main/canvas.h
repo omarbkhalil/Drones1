@@ -64,8 +64,12 @@ public:
     QMap<QPair<const Vector2D*, const Vector2D*>, QVector<const Triangle*>> mapEdgesToTriangles(); ///< Map edges to neighboring triangles
     QVector<QLineF> generateVoronoiEdges(); ///< Generate Voronoi edges
     QMap<Server*, QVector<QLineF>> generateVoronoiCells(); ///< Generate Vor
+signals:
+    void updateSB(QString s);
+
 protected:
     void paintEvent(QPaintEvent *) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
 

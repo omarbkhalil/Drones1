@@ -130,16 +130,16 @@ void MainWindow::on_actionLoad_triggered()
             polygon.addInteriorPoint(point);
         }
     }
+    qDebug()<<"Calling flip itt33333";
 
     // Perform ear-clipping triangulation
     polygon.earClippingTriangulate();
     polygon.integrateInteriorPoints(); // Integrate interior points
-
-    ui->widget->setPolygon(polygon);
-    ui->widget->setServers(servers);
+     ui->widget->setPolygon(polygon);
+     ui->widget->setServers(servers);
 
     // Generate Voronoi cells and repaint
-    ui->widget->generateVoronoiCells(); // Ensure this method exists in Canvas and updates its internal state
+  //  ui->widget->generateVoronoiCells(); // Ensure this method exists in Canvas and updates its internal state
     ui->widget->update();
 
     // Parse drones from JSON
@@ -219,19 +219,15 @@ void MainWindow::on_actionshowCenters_triggered(bool checked)
 }
 void MainWindow::on_actionshowCircles_triggered(bool checked)
 {
-    ui->widget->showCircles=checked;
+ui->widget->flippAll();
     update();
 }
 void MainWindow::on_actionshowDelaunay_triggered(bool checked)
 {
-    // Toggle the boolean in the Canvas
-    ui->widget->showDelaunay = checked;
+    qDebug()<<"Callin00t";
 
-    // If turning it on, flip the triangles to enforce Delaunay
-    if (checked) {
-        ui->widget->flippAll();
-        // You might want to do ui->widget->checkDelaunay() too
-    }
+    // Toggle the boolean in the Canvas
+    ui->widget->checkDelaunay();
 
     ui->widget->update();
 }

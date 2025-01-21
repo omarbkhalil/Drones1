@@ -6,7 +6,6 @@
 #include <QDebug>
 #include <QVector>
 #include "triangle.h"
-
 /**
  * @brief The MyPolygon class
  * Stores up to Nmax vertices in a CCW orientation
@@ -14,6 +13,8 @@
  */
 class MyPolygon {
 private:
+    QVector<Vector2D*> triangleVertices; // New member to store triangle vertices
+
     int Nmax;            ///< maximum capacity
     int N;               ///< current number of vertices
     Vector2D *tabPts;    ///< array of polygon vertices
@@ -21,6 +22,12 @@ private:
     QVector<Triangle> triangles; ///< result of ear clipping
 
 public:
+    void flippIt(QVector<Triangle> &triangles);
+    bool isOnTheLeft(const Vector2D *P, const Vector2D *P1, const Vector2D *P2);
+
+    bool isInside(Vector2D &P);
+
+
     QVector<Vector2D> getHullVertices() const {
         QVector<Vector2D> hullVertices;
         // Assuming tabPts contains only the hull vertices after computeConvexHull is called

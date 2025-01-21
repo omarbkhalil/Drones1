@@ -5,6 +5,9 @@
 #include <QDebug>
 
 //-------------------------------------
+
+QVector<Triangle> Triangle::triangles;
+
 void Triangle::computeCircle()
 {
 
@@ -44,6 +47,8 @@ bool Triangle::isInside(const Vector2D &P)
              << "Left1:" << left1 << "Left2:" << left2 << "Left3:" << left3;
 
     // Return true only if all checks are true
+    qDebug() << "Point is inside the triangle!";
+
     return left1 && left2 && left3;  // Point is inside only if all checks pass
 }
 
@@ -115,40 +120,6 @@ bool Triangle::circleContains(const Vector2D *M)
 }
 
 //-------------------------------------
-bool Triangle::checkDelaunay(const QVector<Vector2D> &tabVertices)
-{
-    bool isOk = true;
-    Vector2D* A = ptr[0];
-    Vector2D* B = ptr[1];
-    Vector2D* C = ptr[2];
-
-    for (const Vector2D &D : tabVertices) {
-        Matrix33 mat;
-
-        mat.m[0][0] = A->x - D.x;
-        mat.m[0][1] = A->y - D.y;
-        mat.m[0][2] = (A->x * A->x - D.x * D.x) + (A->y * A->y - D.y * D.y);
-
-        mat.m[1][0] = B->x - D.x;
-        mat.m[1][1] = B->y - D.y;
-        mat.m[1][2] = (B->x * B->x - D.x * D.x) + (B->y * B->y - D.y * D.y);
-
-        mat.m[2][0] = C->x - D.x;
-        mat.m[2][1] = C->y - D.y;
-        mat.m[2][2] = (C->x * C->x - D.x * D.x) + (C->y * C->y - D.y * D.y);
-
-        // If determinant > 0, it means D is inside the circumcircle
-        if (mat.determinant() > 0) {
-            isOk = false;
-            qDebug() << "Point inside circumcircle. Not Delaunay.";
-            break;
-        }
-    }
-
-    isDelaunay = isOk;
-    flippable = !isOk;
-    return isOk;
-}
 
 
 //-------------------------------------
@@ -161,7 +132,7 @@ void Triangle::updateVertices(Vector2D *_A, Vector2D *_B, Vector2D *_C)
 }
 
 //-------------------------------------
-void Triangle::draw(QPainter &painter) {
+void Triangle::draw(QPainter &painter) const{
     qDebug() << "Entered Triangle::draw";
 
     // Set the pen properties
@@ -178,8 +149,35 @@ void Triangle::draw(QPainter &painter) {
         color.getHslF(&h, &s, &l);
         color.setHslF(h, s, l * 0.75f);
         qDebug() << "Triangle is highlighted. Adjusted color brightness.";
-    }
 
+        QVector<const Vector2D*> commonEdges;
+
+
+        for (Triangle &tri : triangles) {
+            // Skip self
+            if (&tri == this) continue;
+
+            // Clear previous common edges
+            commonEdges.clear();
+
+            // Check for a common edge between this triangle and tri
+            for (int i = 0; i < 3; i++) {
+                if (tri.hasEdge(*this->getVertexPtr(i), *this->getVertexPtr((i + 1) % 3))) {
+                    commonEdges.append(this->getVertexPtr(i));
+                    commonEdges.append(this->getVertexPtr((i + 1) % 3));
+                    break;
+                }
+            }
+
+            // If a common edge is found, attempt flipping
+            if (commonEdges.size() == 2) {
+                qDebug() << "Found common edge between triangles: ("
+                         << commonEdges[0]->x << "," << commonEdges[0]->y << ") and ("
+                         << commonEdges[1]->x << "," << commonEdges[1]->y << ")";
+
+    }
+        }
+    }
     painter.setBrush(color);
 
     // Prepare points for the triangle
@@ -204,6 +202,7 @@ void Triangle::draw(QPainter &painter) {
     }
 }
 
+
 void Triangle::drawCircle(QPainter &painter) {
     painter.setPen(QPen(Qt::black,3,Qt::DashLine));
     painter.setBrush(Qt::NoBrush);
@@ -211,12 +210,12 @@ void Triangle::drawCircle(QPainter &painter) {
 }
 
 //-------------------------------------
-void Triangle::flippIt(QVector<Triangle> &triangles)
-{
+void Triangle::flippIt() {
     qDebug() << "Attempting to flip a triangle.";
 
     QVector<const Vector2D*> commonEdges;
 
+    // Use the static `Triangle::triangles` vector
     for (Triangle &tri : triangles) {
         // Skip self
         if (&tri == this) continue;
@@ -279,5 +278,43 @@ void Triangle::flippIt(QVector<Triangle> &triangles)
     }
 
     qDebug() << "No flip performed.";
+}
+
+bool Triangle:: checkDelaunay(const QVector<Vector2D> &tabVertices) {
+    auto it = tabVertices.begin();
+    bool isOk = true;
+
+
+    // Assume tabVertices has at least three points, A, B, and C
+    // Assume tabVertices has at least three points, A, B, and C
+    const Vector2D *A = ptr[0];
+    const Vector2D *B = ptr[1];
+    const Vector2D *C = ptr[2];
+
+    while (it != tabVertices.end() && isOk) {
+        Matrix33 mat;
+        // PAGE 35 DU COURS GEOMETRIC ALGOITHMS
+        const Vector2D D = (*it);
+        mat.m[0][0] = A->x - D.x;
+        mat.m[0][1] = A->y - D.y;
+        mat.m[0][2] = ((A->x * A->x) - (D.x * D.x)) + ((A->y * A->y) - (D.y * D.y));
+
+        mat.m[1][0] = B->x - D.x;
+        mat.m[1][1] = B->y - D.y ;
+        mat.m[1][2] = ((B->x * B->x) - (D.x * D.x)) + ((B->y * B->y) - (D.y * D.y));
+
+        mat.m[2][0] =   C->x - D.x;
+        mat.m[2][1] =  C->y - D.y ;
+        mat.m[2][2] = ((C->x * C->x) - (D.x * D.x)) + ((C->y * C->y) - (D.y * D.y));
+
+        isOk = (mat.determinant() <= 0);
+        it++;
+    };
+    isDelaunay=isOk;
+    flippable=false;
+    //qDebug() << isDelaunay;
+    return isDelaunay;
+
+
 }
 

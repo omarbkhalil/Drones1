@@ -62,7 +62,7 @@ void Canvas::addPoints(const QVector<Vector2D> &tab)
     update();
 }
 
-void Canvas::generateTriangles() {
+/*void Canvas::generateTriangles() {
     // Clear old data
     triangles.clear();
     polygons.clear();
@@ -110,27 +110,50 @@ void Canvas::generateTriangles() {
     update();
 }
 
-
+*/
 
 
 
 bool Canvas::checkDelaunay()
 {
+    // Ensure tabVertices is populated
+    QVector<Vector2D> allVertices;
+    for (const Triangle &tri : Triangle::triangles) {
+        for (int i = 0; i < 3; i++) {
+            if (!allVertices.contains(*tri.getVertexPtr(i))) {
+                allVertices.append(*tri.getVertexPtr(i));
+            }
+        }
+    }
+
     bool areAllDelaunay = true;
-    for (auto &triangle : triangles) {
-        bool res = triangle.checkDelaunay(vertices);
+
+    for (Triangle &triangle : Triangle::triangles) {
+        qDebug() << "Checking triangle with vertices: (" << triangle.getVertexPtr(0)->x
+                 << "," << triangle.getVertexPtr(0)->y << "), ("
+                 << triangle.getVertexPtr(1)->x << "," << triangle.getVertexPtr(1)->y << "), ("
+                 << triangle.getVertexPtr(2)->x << "," << triangle.getVertexPtr(2)->y << ")";
+
+        // Pass the populated vertices to checkDelaunay
+        bool res = triangle.checkDelaunay(allVertices);
+
         if (!res) {
-            auto L = findOppositePointOfTriangle(triangle);
-            auto it = L.begin();
-            while (it != L.end() && triangle.circleContains(*it)) {
+            auto oppositePoints = findOppositePointOfTriangle(triangle);
+            auto it = oppositePoints.begin();
+            while (it != oppositePoints.end() && triangle.circleContains(*it)) {
                 ++it;
             }
-            std::cout << "L size: " << L.size() << ", Iterator at end: " << (it != L.end() ? "No" : "Yes") << std::endl;
-            triangle.setDelaunay(false, it != L.end());
+
+            qDebug() << "Opposite points size:" << oppositePoints.size()
+                     << ", Iterator at end:" << (it != oppositePoints.end() ? "No" : "Yes");
+
+            triangle.setDelaunay(false, it != oppositePoints.end());
         }
+
         areAllDelaunay = res && areAllDelaunay;
     }
-    update();
+
+    update(); // Trigger a repaint
     return areAllDelaunay;
 }
 
@@ -176,24 +199,6 @@ QVector<const Vector2D *> Canvas::findOppositePointOfTriangle(Triangle &tri)
     return list;
 }
 
-void Canvas::flippAll()
-{
-    bool delaunay = false;
-
-    while (!delaunay) {
-        delaunay = true;
-
-        for (Triangle &tri : triangles) {
-            if (!tri.checkDelaunay(vertices)) {
-                tri.flippIt(triangles);
-                delaunay = false;
-            }
-        }
-    }
-
-    qDebug() << "All triangles are now Delaunay.";
-    update();
-}
 
 
 /* void Canvas::loadMesh(const QString &filePath)
@@ -314,7 +319,7 @@ int triangleCount = 0;
 
 */
 
-QVector<Vector2D> Canvas::computeCircumcenters() {
+/*QVector<Vector2D> Canvas::computeCircumcenters() {
     QVector<Vector2D> circumcenters;
 
     for (const Triangle &triangle : triangles) {
@@ -323,6 +328,7 @@ QVector<Vector2D> Canvas::computeCircumcenters() {
 
     return circumcenters;
 }
+*/
 
 QMap<QPair<const Vector2D*, const Vector2D*>, QVector<const Triangle*>> Canvas::mapEdgesToTriangles() {
     QMap<QPair<const Vector2D*, const Vector2D*>, QVector<const Triangle*>> edgeToTriangles;
@@ -340,7 +346,6 @@ QMap<QPair<const Vector2D*, const Vector2D*>, QVector<const Triangle*>> Canvas::
 
     return edgeToTriangles;
 }
-
 QVector<QLineF> Canvas::generateVoronoiEdges() {
     QVector<QLineF> voronoiEdges;
     auto edgeToTriangles = mapEdgesToTriangles();
@@ -359,10 +364,10 @@ QVector<QLineF> Canvas::generateVoronoiEdges() {
 
     return voronoiEdges;
 }
-QMap<Server*, QVector<QLineF>> Canvas::generateVoronoiCells() {
+/*QMap<Server*, QVector<QLineF>> Canvas::generateVoronoiCells() {
     QMap<Server*, QVector<QLineF>> serverVoronoiCells;
     auto edgeToTriangles = mapEdgesToTriangles();
-  qDebug() << "Generating Voronoi cells...";
+    qDebug() << "Generating Voronoi cells...";
     // Debug servers
     qDebug() << "Servers:";
     for (const Server* server : servers) {
@@ -417,7 +422,7 @@ QMap<Server*, QVector<QLineF>> Canvas::generateVoronoiCells() {
     return serverVoronoiCells;
 }
 
-
+*/
 
 void Canvas::paintEvent(QPaintEvent *) {
     QPainter painter(this);
@@ -432,8 +437,9 @@ void Canvas::paintEvent(QPaintEvent *) {
     qDebug() << "paintEvent triggered. Drawing Voronoi cells...";
 
     // Draw the polygon
-    myPolygon.draw(painter, true);
-
+    for (const Triangle &triangle : Triangle::triangles) {
+        triangle.draw(painter);  // Call the draw method for each triangle
+    }
     // Draw centers if toggled
     if (showCenters) {
         QPen centerPen(Qt::red);
@@ -446,8 +452,12 @@ void Canvas::paintEvent(QPaintEvent *) {
             painter.drawEllipse(QPointF(center.x, center.y), 3, 3);
         }
     }
-
-    auto voronoiCells = generateVoronoiCells();
+    if (showCircles) {
+        for (auto &tri : triangles) {
+            if (tri.isHighlighted()) tri.drawCircle(painter);
+        }
+    }
+    /*auto voronoiCells = generateVoronoiCells();
 
     // Debug raw edges
     qDebug() << "Raw Voronoi edges:";
@@ -479,6 +489,8 @@ void Canvas::paintEvent(QPaintEvent *) {
     }
 
     qDebug() << "Total Voronoi edges rendered:" << voronoiCellCount;
+
+*/
     // Draw servers
     QPen serverPen(Qt::blue);
     serverPen.setWidth(5);
@@ -549,24 +561,24 @@ void Canvas::resizeEvent(QResizeEvent *)
 
 void Canvas::reScale()
 {
-    if (vertices.isEmpty()) return;
+    // if (vertices.isEmpty()) return;
 
-    int newWidth = width() - 20;
-    int newHeight = height() - 20;
+    //int newWidth = width() - 20;
+    //int newHeight = height() - 20;
 
-    auto box = getBox();
-    float dataWidth = box.second.x - box.first.x;
-    float dataHeight = box.second.y - box.first.y;
+    //  auto box = getBox();
+    //  float dataWidth = box.second.x - box.first.x;
+    //  float dataHeight = box.second.y - box.first.y;
 
     // Use a float member called scaleFactor, not scale()
-    scaleFactor = qMin(float(newWidth) / dataWidth,
-                       float(newHeight) / dataHeight);
+    // scaleFactor = qMin(float(newWidth) / dataWidth,
+    //                     float(newHeight) / dataHeight);
 
-    origin.setX(box.first.x);
-    origin.setY(box.first.y);
+    //  origin.setX(box.first.x);
+    //  origin.setY(box.first.y);
 }
 
-QPair<Vector2D, Vector2D> Canvas::getBox()
+/*QPair<Vector2D, Vector2D> Canvas::getBox()
 {
     if (vertices.isEmpty()) {
         // Default bounding box if no data
@@ -584,7 +596,7 @@ QPair<Vector2D, Vector2D> Canvas::getBox()
     }
     return { infLeft, supRight };
 }
-
+*/
 void Canvas::mousePressEvent(QMouseEvent *event)
 {
     if (!event) return;
@@ -597,7 +609,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     qDebug() << "Transformed to canvas coordinates:" << canvasX << canvasY;
 
     // Check if the click is inside any triangle
-    for (Triangle &tri : triangles) {
+    for (Triangle &tri : Triangle::triangles) {
         qDebug() << "Checking triangle with vertices: ("
                  << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << "), ("
                  << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << "), ("
@@ -605,7 +617,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         if (tri.isInside(clickPosition)) {
             qDebug() << "Point is inside the triangle!";
             tri.setHighlighted(tri.isInside(canvasX, canvasY));
-            //    tri.flippIt(triangles); // Attempt to flip the clicked triangle
+          //     tri.flippIt(); // Attempt to flip the clicked triangle
             update(); // Repaint after the change
             return;
         } else {
@@ -615,12 +627,10 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
     qDebug() << "No triangle clicked.";
 
-
-
     update();
 }
 
-/*void Canvas::mouseMoveEvent(QMouseEvent *event) {
+void Canvas::mouseMoveEvent(QMouseEvent *event) {
     float mouseX = static_cast<float>(event->pos().x() - 10) / scale + origin.x;
     float mouseY = -static_cast<float>(event->pos().y() - height() + 10) / scale + origin.y;
     emit updateSB(QString("Mouse position= (") + QString::number(mouseX, 'f', 1) + "," + QString::number(mouseY, 'f', 1) + ")");
@@ -630,14 +640,14 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     }
     update();
 }
-*/
+
 
 bool Canvas::handleTriangleClick(const Vector2D &clickPosition)
 {
-    for (Triangle &tri : triangles) {
+    for (Triangle &tri :  Triangle::triangles) {
         if (tri.isInside(clickPosition)) {
             qDebug() << "Triangle clicked!";
-            //     tri.flippIt(triangles); // Attempt to flip the clicked triangle
+               tri.flippIt(); // Attempt to flip the clicked triangle
             return true; // Triangle was clicked
         }
     }
@@ -647,20 +657,9 @@ bool Canvas::handleTriangleClick(const Vector2D &clickPosition)
 
 void Canvas::handleDroneClick(const QPoint &screenPos)
 {
-    // Find a landed drone
-    auto it = mapDrones->begin();
-    while (it != mapDrones->end() && (*it)->getStatus() != Drone::landed) {
-        ++it;
-    }
 
-    if (it != mapDrones->end()) {
-        // Set the clicked position as the goal for the landed drone
-        (*it)->setGoalPosition(Vector2D(screenPos.x(), screenPos.y()));
-        (*it)->start();
-    }
+
 }
-
-
 Server* Canvas::findServerByName(const QString &name) {
     for (Server* srv : servers) {
         if (srv->getName() == name) {
@@ -673,3 +672,42 @@ void Canvas::setPolygon(const MyPolygon& polygon) {
     myPolygon = polygon;
     update();  // Optionally, trigger a repaint whenever a new polygon is set
 }
+void Canvas::flippAll()
+{
+    qDebug() << "Entered flippAll.";
+
+    // Ensure allVertices is populated dynamically from triangles
+    QVector<Vector2D> allVertices;
+    for (const Triangle &tri : Triangle::triangles) {
+        for (int i = 0; i < 3; i++) {
+            if (!allVertices.contains(*tri.getVertexPtr(i))) {
+                allVertices.append(*tri.getVertexPtr(i));
+            }
+        }
+    }
+
+    bool delaunay = false;
+
+    while (!delaunay) {
+        delaunay = true;
+
+        for (Triangle &tri : Triangle::triangles) {
+            qDebug() << "Checking triangle with vertices: ("
+                     << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << "), ("
+                     << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << "), ("
+                     << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y << ")";
+
+            // Use dynamically populated allVertices for Delaunay check
+            if (!tri.checkDelaunay(allVertices)) {
+                qDebug() << "Triangle does not satisfy Delaunay. Attempting to flip.";
+                tri.flippIt();  // Attempt to flip the triangle
+                delaunay = false;  // Continue the process
+            }
+        }
+    }
+
+    qDebug() << "All triangles are now Delaunay.";
+    update();  // Trigger a repaint of the canvas
+}
+
+

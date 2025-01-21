@@ -42,15 +42,53 @@ public:
     // ----------------------------
     // Constructors
     // ----------------------------
+    static QVector<Triangle> triangles; // Static list of all triangles
 
-    Triangle(Vector2D* v0, Vector2D* v1, Vector2D* v2, const QColor &color = Qt::yellow)
-    {
+
+
+    Triangle(Vector2D* v0, Vector2D* v1, Vector2D* v2, const QColor &color) {
         ptr[0] = v0;
         ptr[1] = v1;
         ptr[2] = v2;
-        setColor(color);
-        computeCircle(); // Precompute the circumcircle
+        brush.setColor(color);
+        computeCircle(); // Optionally compute properties like circumcircle
     }
+
+    Triangle() {
+        ptr[0] = nullptr;
+        ptr[1] = nullptr;
+        ptr[2] = nullptr;
+        // Initialize other necessary members, if any.
+    }
+
+    static void setTriangles(const QVector<Triangle>& tris) {
+        Triangle::triangles.clear();  // Clear the existing triangles
+        Triangle::triangles.reserve(tris.size());  // Optimize memory allocation
+
+        qDebug() << "Setting triangles. Total count:" << tris.size();
+        for (const Triangle& incomingTriangle : tris) {
+            // Create a new Triangle using the existing vertices
+            Triangle newTriangle(
+                incomingTriangle.ptr[0],  // Vertex 0
+                incomingTriangle.ptr[1],  // Vertex 1
+                incomingTriangle.ptr[2],  // Vertex 2
+                incomingTriangle.brush.color()  // Retain the brush color
+                );
+
+            // Debug each vertex
+            for (int i = 0; i < 3; i++) {
+                if (incomingTriangle.ptr[i]) {
+                    qDebug() << "Vertex" << i << ": (" << incomingTriangle.ptr[i]->x << "," << incomingTriangle.ptr[i]->y << ")";
+                } else {
+                    qDebug() << "Vertex" << i << ": null";
+                }
+            }
+
+            // Add the new triangle to the static vector
+            Triangle::triangles.append(newTriangle);
+        }
+    }
+
 
     Triangle(Vector2D* ptr1, Vector2D* ptr2, Vector2D* ptr3)
     {
@@ -169,13 +207,13 @@ public:
     // ----------------------------
     // Drawing
     // ----------------------------
-    void draw(QPainter &painter);
+    void draw(QPainter &painter) const;
     void drawCircle(QPainter &painter);
 
     // ----------------------------
     // Flipping
     // ----------------------------
-    void flippIt(QVector<Triangle> &triangles);
+    void flippIt();
 };
 
 #endif // TRIANGLE_H
