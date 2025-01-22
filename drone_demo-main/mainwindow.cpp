@@ -252,7 +252,6 @@ void MainWindow::distributeDronesEqually() {
 }
 
 void MainWindow::on_actionshowVoronoi_triggered() {
-    // Get access to the canvas
     Canvas* canvas = ui->widget;
 
     if (!canvas) {
@@ -260,22 +259,8 @@ void MainWindow::on_actionshowVoronoi_triggered() {
         return;
     }
 
-    // Find the "London" server position
-    Server* londonServer = nullptr;
-    for (Server* server : canvas->getServers()) {
-        if (server->getName() == "London") {
-            londonServer = server;
-            break;
-        }
-    }
-
-    if (!londonServer) {
-        qDebug() << "London server not found!";
-        return;
-    }
-
-    // Generate Voronoi diagram for the "London" server
-    Vector2D londonPosition = londonServer->getPosition();
-    canvas->initializeVoronoi(londonPosition);  // Use the existing Canvas method to generate Voronoi
+    // Generate Voronoi diagram for all server points
+    canvas->generateVoronoi();
+     ui->widget->update();
 }
 

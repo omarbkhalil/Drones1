@@ -72,7 +72,8 @@ public:
     QVector<QLineF> generateVoronoiEdges(); ///< Generate Voronoi edges
     QMap<Server*, QVector<QLineF>> generateVoronoiCells(); ///< Generate Vor
     QVector<Server*> getServers() const;  // Getter for servers
-
+    void generateVoronoi();       // Generate Voronoi for all servers
+    QVector<QLineF> getVoronoiEdges() const;  // Getter for Voronoi edges
 signals:
     void updateSB(QString s);
 
@@ -98,6 +99,7 @@ private:
     float scale = 1.0f;
     Vector2D origin;
    Voronoi* voronoi;
+     QVector<QLineF> voronoiEdges;
     bool handleTriangleClick(const Vector2D &clickPosition); ///< Handles triangle flipping on click
     void handleDroneClick(const QPoint &screenPos);
 };

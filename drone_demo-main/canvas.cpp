@@ -362,10 +362,11 @@ void Canvas::paintEvent(QPaintEvent *) {
             if (tri.isHighlighted()) tri.drawCircle(painter);
         }
     }
-     //Draw Voronoi diagram
-    if (voronoi) {
-        qDebug() << "Drawing Voronoi diagram...";
-        voronoi->draw(painter);
+
+    // Draw Voronoi edges
+    painter.setPen(QPen(Qt::blue, 2));
+    for (const QLineF& edge : voronoiEdges) {
+        painter.drawLine(edge);
     }
     QPen serverPen(Qt::blue);
     serverPen.setWidth(5);
@@ -582,3 +583,43 @@ void Canvas::flippAll() {
     checkDelaunay(); // Recheck Delaunay condition after all flips
 }
 
+void Canvas::generateVoronoi() {
+    voronoiEdges.clear();  // Clear any previous Voronoi edges
+
+    // Iterate over all servers
+    for (Server* server : servers) {
+        Vector2D center = server->getPosition();
+        QVector<QLineF> localEdges;
+
+        // Iterate over triangles and find those containing the server position
+        for (const Triangle& triangle : Triangle::triangles) {
+            if (triangle.contains(center)) {
+                // Generate Voronoi edges for this server
+                for (int i = 0; i < 3; ++i) {
+                    const Vector2D* v1 = triangle.getVertexPtr(i);
+                    const Vector2D* v2 = triangle.getVertexPtr((i + 1) % 3);
+
+                    // Find a neighboring triangle sharing this edge
+                    for (const Triangle& neighbor : Triangle::triangles) {
+                        if (&triangle != &neighbor && neighbor.hasEdge(*v1, *v2)) {
+                            QLineF edge(triangle.getCircleCenter().x, triangle.getCircleCenter().y,
+                                        neighbor.getCircleCenter().x, neighbor.getCircleCenter().y);
+                            localEdges.append(edge);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Append local edges to global Voronoi edges
+        voronoiEdges.append(localEdges);
+    }
+
+    qDebug() << "Generated Voronoi edges. Total edges:" << voronoiEdges.size();
+    update();  // Trigger repaint to render Voronoi
+}
+
+QVector<QLineF> Canvas::getVoronoiEdges() const {
+    return voronoiEdges;
+}
