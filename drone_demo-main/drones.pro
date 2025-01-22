@@ -17,7 +17,8 @@ SOURCES += \
     mypolygon.cpp \
     server.cpp \
     triangle.cpp \
-    vector2d.cpp
+    vector2d.cpp \
+    voronoi.cpp
 HEADERS += \
     canvas.h \
     determinant.h \
@@ -26,7 +27,8 @@ HEADERS += \
     mypolygon.h \
     server.h \
     triangle.h \
-    vector2d.h
+    vector2d.h \
+    voronoi.h
 
 FORMS += \
     mainwindow.ui

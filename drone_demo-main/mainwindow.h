@@ -14,7 +14,7 @@
 #include <vector2d.h>
 #include <server.h>
 #include <mypolygon.h>
-
+#include "voronoi.h"
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -43,6 +43,8 @@ private slots:
 
     void on_actionshowCircles_triggered(bool checked);
 
+    void on_actionshowVoronoi_triggered();
+
 private:
     Ui::MainWindow *ui;
     QMap<QString,Drone*> mapDrones;
@@ -53,6 +55,7 @@ private:
      void loadJsonFile(const QString &filePath); // Method to load and parse JSON file
       QVector<Server *> servers; // List of servers
      QVector<Vector2D> allPoints;
+      Voronoi* voronoi;
 
 };
 #endif // MAINWINDOW_H

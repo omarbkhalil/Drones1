@@ -7,7 +7,7 @@
 #include <QJsonObject>
 #include <QDebug>
 #include <iostream>
-
+#include "voronoi.h"
 
 Canvas::Canvas(QWidget *parent)
     : QWidget(parent),
@@ -359,99 +359,6 @@ int triangleCount = 0;
 }
 */
 
-QMap<QPair<const Vector2D*, const Vector2D*>, QVector<const Triangle*>> Canvas::mapEdgesToTriangles() {
-    QMap<QPair<const Vector2D*, const Vector2D*>, QVector<const Triangle*>> edgeToTriangles;
-
-    for (const Triangle &triangle : Triangle::triangles) {
-        for (int i = 0; i < 3; ++i) {
-            const Vector2D* v1 = triangle.getVertexPtr(i);
-            const Vector2D* v2 = triangle.getVertexPtr((i + 1) % 3);
-
-            // Ensure consistent edge ordering
-            auto edge = qMakePair(qMin(v1, v2), qMax(v1, v2));
-            edgeToTriangles[edge].append(&triangle);
-        }
-    }
-
-    return edgeToTriangles;
-}
-QVector<QLineF> Canvas::generateVoronoiEdges() {
-    QVector<QLineF> voronoiEdges;
-    auto edgeToTriangles = mapEdgesToTriangles();
-
-
-    for (auto it = edgeToTriangles.begin(); it != edgeToTriangles.end(); ++it) {
-        const QVector<const Triangle*> &trianglesSharingEdge = it.value();
-
-        // If two triangles share the edge, connect their circumcenters
-        if (trianglesSharingEdge.size() == 2) {
-            const Vector2D center1 = trianglesSharingEdge[0]->getCircleCenter();
-            const Vector2D center2 = trianglesSharingEdge[1]->getCircleCenter();
-            voronoiEdges.append(QLineF(center1.x, center1.y, center2.x, center2.y));
-        }
-    }
-
-    return voronoiEdges;
-}
-/*QMap<Server*, QVector<QLineF>> Canvas::generateVoronoiCells() {
-    QMap<Server*, QVector<QLineF>> serverVoronoiCells;
-    auto edgeToTriangles = mapEdgesToTriangles();
-    qDebug() << "Generating Voronoi cells...";
-    // Debug servers
-    qDebug() << "Servers:";
-    for (const Server* server : servers) {
-        qDebug() << server->getName() << "at position:" << server->getPosition().x << server->getPosition().y;
-    }
-
-    // Debug triangles
-    qDebug() << "Triangles:";
-    for (const Triangle &tri : triangles) {
-        qDebug() << "Triangle vertices:"
-                 << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << " | "
-                 << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << " | "
-                 << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y;
-    }
-
-    for (Server* server : servers) {
-        QVector<QLineF> voronoiEdges;
-
-        // Find all triangles connected to the server's position
-        for (const Triangle &triangle : triangles) {
-            if (triangle.contains(server->getPosition())) {
-                const Vector2D center = triangle.getCircleCenter();
-
-                qDebug() << "Triangle associated with server:" << server->getName()
-                         << "Triangle center:" << center.x << center.y;
-
-                // Add edges connecting this circumcenter to neighboring circumcenters
-                for (int i = 0; i < 3; ++i) {
-                    const Vector2D* v1 = triangle.getVertexPtr(i);
-                    const Vector2D* v2 = triangle.getVertexPtr((i + 1) % 3);
-                    auto edge = qMakePair(qMin(v1, v2), qMax(v1, v2));
-
-                    if (edgeToTriangles.contains(edge) && edgeToTriangles[edge].size() == 2) {
-                        const Triangle* neighbor = edgeToTriangles[edge][0] == &triangle
-                                                       ? edgeToTriangles[edge][1]
-                                                       : edgeToTriangles[edge][0];
-
-                        const Vector2D neighborCenter = neighbor->getCircleCenter();
-                        voronoiEdges.append(QLineF(center.x, center.y, neighborCenter.x, neighborCenter.y));
-
-                        qDebug() << "Edge added from (" << center.x << "," << center.y
-                                 << ") to (" << neighborCenter.x << "," << neighborCenter.y << ")";
-                    }
-                }
-            }
-        }
-
-        serverVoronoiCells[server] = voronoiEdges;
-    }
-
-    qDebug() << "Voronoi cells generated for" << serverVoronoiCells.size() << "servers.";
-    return serverVoronoiCells;
-}
-
-*/
 
 void Canvas::paintEvent(QPaintEvent *) {
     QPainter painter(this);
@@ -487,41 +394,11 @@ void Canvas::paintEvent(QPaintEvent *) {
             if (tri.isHighlighted()) tri.drawCircle(painter);
         }
     }
-    /*auto voronoiCells = generateVoronoiCells();
-
-    // Debug raw edges
-    qDebug() << "Raw Voronoi edges:";
-    for (auto it = voronoiCells.begin(); it != voronoiCells.end(); ++it) {
-        for (const QLineF &edge : it.value()) {
-            qDebug() << "Edge from (" << edge.x1() << "," << edge.y1() << ") to ("
-                     << edge.x2() << "," << edge.y2() << ")";
-        }
+     //Draw Voronoi diagram
+    if (voronoi) {
+        qDebug() << "Drawing Voronoi diagram...";
+        voronoi->draw(painter);
     }
-
-    // Debug transformed edges
-    QTransform matrix = painter.worldTransform();
-    qDebug() << "Transformed Voronoi edges:";
-    for (auto it = voronoiCells.begin(); it != voronoiCells.end(); ++it) {
-        for (const QLineF &edge : it.value()) {
-            QPointF p1 = matrix.map(QPointF(edge.x1(), edge.y1()));
-            QPointF p2 = matrix.map(QPointF(edge.x2(), edge.y2()));
-            qDebug() << "Edge from (" << p1.x() << "," << p1.y() << ") to ("
-                     << p2.x() << "," << p2.y() << ")";
-        }
-    }
-
-    int voronoiCellCount = 0;
-    for (auto it = voronoiCells.begin(); it != voronoiCells.end(); ++it) {
-        for (const QLineF &edge : it.value()) {
-            painter.drawLine(edge);  // Draw the line
-            voronoiCellCount++;
-        }
-    }
-
-    qDebug() << "Total Voronoi edges rendered:" << voronoiCellCount;
-
-*/
-    // Draw servers
     QPen serverPen(Qt::blue);
     serverPen.setWidth(5);
     painter.setPen(serverPen);

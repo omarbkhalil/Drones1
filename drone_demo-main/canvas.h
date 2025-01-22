@@ -10,6 +10,7 @@
 #include "drone.h"
 #include "server.h"
 #include "mypolygon.h"
+#include "voronoi.h"
 
 class Canvas : public QWidget {
     Q_OBJECT
@@ -92,7 +93,7 @@ private:
     QImage droneImg;
     float scale = 1.0f;
     Vector2D origin;
-
+    Voronoi* voronoi;
     bool handleTriangleClick(const Vector2D &clickPosition); ///< Handles triangle flipping on click
     void handleDroneClick(const QPoint &screenPos);
 };

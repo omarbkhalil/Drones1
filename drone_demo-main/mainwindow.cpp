@@ -45,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow() {
     delete ui;
     delete timer;
+    delete voronoi;
 }
 
 void MainWindow::on_actionQuit_triggered()
@@ -249,3 +250,29 @@ void MainWindow::distributeDronesEqually() {
         serverIndex = (serverIndex + 1) % serverCount;  // Round-robin distribution
     }
 }
+
+void MainWindow::on_actionshowVoronoi_triggered()
+{
+    // Find the "London" server position
+    Server* londonServer = nullptr;
+    for (Server* server : ui->widget->servers) { // Assuming Canvas holds the servers
+        if (server->getName() == "London") {
+            londonServer = server;
+            break;
+        }
+    }
+
+    if (!londonServer) {
+        qDebug() << "London server not found!";
+        return;
+    }
+
+    // Generate Voronoi diagram for the "London" server
+    Vector2D londonPosition = londonServer->getPosition();
+    voronoi = new Voronoi(londonPosition);
+    voronoi->generate(Triangle::triangles);
+
+    // Trigger repaint in Canvas
+    ui->widget->update();
+}
+
