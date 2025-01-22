@@ -1,0 +1,19 @@
+var searchData=
+[
+  ['scale_0',['scale',['../class_canvas.html#a387509ed6ea92c766ec53cef653deab1',1,'Canvas']]],
+  ['scalefactor_1',['scaleFactor',['../class_canvas.html#ade46088191faa1bf80b091d1dd6e5f24',1,'Canvas']]],
+  ['servername_2',['serverName',['../class_drone.html#afa7d97a484cb4ed052f4ec4e88a2586c',1,'Drone']]],
+  ['serverpositions_3',['serverPositions',['../class_canvas.html#a1772a8dc5809e13a425e498c0abcdbce',1,'Canvas']]],
+  ['servers_4',['servers',['../class_canvas.html#afacf5f78b600112c9efc0e729f683568',1,'Canvas::servers'],['../class_main_window.html#a07015b9b603ded8bf21aa9d54254039b',1,'MainWindow::servers']]],
+  ['showcenters_5',['showCenters',['../class_canvas.html#ac1a1b0d3b6fa9d3c4aa30c014e15051c',1,'Canvas']]],
+  ['showcircles_6',['showCircles',['../class_canvas.html#abb70425f30be2b4b97e56bb56486a525',1,'Canvas']]],
+  ['showcollision_7',['showCollision',['../class_drone.html#a7b9789266ddba9f9a18a4f66bd3ba49d',1,'Drone']]],
+  ['showdelaunay_8',['showDelaunay',['../class_canvas.html#a93453b6bc063067c3452e534d892204a',1,'Canvas']]],
+  ['showtriangles_9',['showTriangles',['../class_canvas.html#adec15319e8610b6a4a016f70970ee82f',1,'Canvas']]],
+  ['speed_10',['speed',['../class_drone.html#a4cbe7d72da36c27cb58fa797240c9698',1,'Drone']]],
+  ['speedpb_11',['speedPB',['../class_drone.html#a9867653677f7b2227ff6eddd1ce7fcbc',1,'Drone']]],
+  ['speedsetpoint_12',['speedSetpoint',['../class_drone.html#a7ffe5cfbb988f0f9650c69fb229eb927',1,'Drone']]],
+  ['status_13',['status',['../class_drone.html#a36df26e775f422a6df74abdd185bc63c',1,'Drone']]],
+  ['statusbar_14',['statusbar',['../class_ui___main_window.html#a07519bbb9a350befd6feb4e84ef299fd',1,'Ui_MainWindow']]],
+  ['stopimg_15',['stopImg',['../class_drone.html#ab9f5320910b5400ac4e9d0c8292edab2',1,'Drone']]]
+];

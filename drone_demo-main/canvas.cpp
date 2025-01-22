@@ -9,6 +9,16 @@
 #include <iostream>
 #include "voronoi.h"
 
+/**
+ * @brief Constructs a new Canvas object.
+ *
+ * Initializes the Canvas with a parent QWidget. The Canvas is configured
+ * to track mouse events and optionally display various graphical elements
+ * like triangles, the Delaunay triangulation, and the centers of triangles.
+ * It also loads a drone image that is used within the graphical representation.
+ *
+ * @param parent The parent widget to which this Canvas will belong.
+ */
 Canvas::Canvas(QWidget *parent)
     : QWidget(parent),
     myPolygon(100),

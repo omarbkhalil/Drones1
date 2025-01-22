@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['canvas_0',['Canvas',['../class_canvas.html',1,'Canvas'],['../class_canvas.html#aeea65f2bfc2be61bdbcaaa3a67c33185',1,'Canvas::Canvas(QWidget *parent=nullptr)'],['../class_canvas.html#aeea65f2bfc2be61bdbcaaa3a67c33185',1,'Canvas::Canvas(QWidget *parent=nullptr)']]],
+  ['canvas_2ecpp_1',['canvas.cpp',['../backup_2canvas_8cpp.html',1,'(Global Namespace)'],['../canvas_8cpp.html',1,'(Global Namespace)']]],
+  ['canvas_2eh_2',['canvas.h',['../backup_2canvas_8h.html',1,'(Global Namespace)'],['../canvas_8h.html',1,'(Global Namespace)']]],
+  ['center_3',['center',['../class_voronoi.html#acb47756d294e5b7a1209cb1c4d685499',1,'Voronoi']]],
+  ['centralwidget_4',['centralwidget',['../class_ui___main_window.html#a39420100bfee3ba57f137af5a3b0f8e9',1,'Ui_MainWindow']]],
+  ['changecolor_5',['changeColor',['../class_my_polygon.html#a51697812e49c631c6a0c9e08c1ab735d',1,'MyPolygon']]],
+  ['chargingspeed_6',['chargingSpeed',['../class_drone.html#a408b128f8cefa55dfbc53da173e52f19',1,'Drone']]],
+  ['checkdelaunay_7',['checkDelaunay',['../class_canvas.html#a875b0b334afc2eb857604adddc118671',1,'Canvas::checkDelaunay()'],['../class_triangle.html#a6cd8236a25745922faf396bf4bbd6ded',1,'Triangle::checkDelaunay()'],['../class_canvas.html#a875b0b334afc2eb857604adddc118671',1,'Canvas::checkDelaunay()'],['../class_triangle.html#a6cd8236a25745922faf396bf4bbd6ded',1,'Triangle::checkDelaunay(const QVector&lt; Vector2D &gt; &amp;tabVertices)']]],
+  ['circlecontains_8',['circleContains',['../class_triangle.html#a9e8fb3bac838c95865165e61b14ee6bc',1,'Triangle::circleContains(const Vector2D *M)'],['../class_triangle.html#a9e8fb3bac838c95865165e61b14ee6bc',1,'Triangle::circleContains(const Vector2D *M)']]],
+  ['circumcenter_9',['circumCenter',['../class_triangle.html#a81b54984cefb55231f55bdfeac41a545',1,'Triangle']]],
+  ['circumradius_10',['circumRadius',['../class_triangle.html#ab4b09de31bf414d3045d8b5a42fb9203',1,'Triangle']]],
+  ['clear_11',['clear',['../class_canvas.html#ac4559a6535f497f17415032632aa9f6a',1,'Canvas::clear()'],['../class_canvas.html#ac4559a6535f497f17415032632aa9f6a',1,'Canvas::clear()']]],
+  ['cleartriangles_12',['clearTriangles',['../class_canvas.html#a0091d0d410851a084a25e3a4feb3d7c4',1,'Canvas::clearTriangles()'],['../class_canvas.html#a0091d0d410851a084a25e3a4feb3d7c4',1,'Canvas::clearTriangles()']]],
+  ['coefcollision_13',['coefCollision',['../class_drone.html#aad538d6b86956f7cb011941c06992e93',1,'Drone']]],
+  ['color_14',['color',['../class_server.html#a71b19ef985c48786384795a7bc94b760',1,'Server::color'],['../class_triangle.html#a9f038c8c67bdd6372182939c9839ec99',1,'Triangle::color']]],
+  ['compasimg_15',['compasImg',['../class_drone.html#ad4619c071d489711ba7ee9d69a46a3c7',1,'Drone']]],
+  ['compassize_16',['compasSize',['../class_drone.html#ab80b4a7573dbf12f8c295b0f0952ec99',1,'Drone']]],
+  ['computecircle_17',['computeCircle',['../class_triangle.html#abc1d2380e0daf2b13ef96e3e89f01a2d',1,'Triangle::computeCircle()'],['../class_triangle.html#abc1d2380e0daf2b13ef96e3e89f01a2d',1,'Triangle::computeCircle()']]],
+  ['computecircumcenters_18',['computeCircumcenters',['../class_canvas.html#a7394a12f72aae6815e9a9dddba9793e4',1,'Canvas']]],
+  ['computeconvexhull_19',['computeConvexHull',['../class_my_polygon.html#afe356f86796565d4033650d89122425d',1,'MyPolygon']]],
+  ['computesignedarea_20',['computeSignedArea',['../class_my_polygon.html#abf65e85514c141d45b06a46971332062',1,'MyPolygon']]],
+  ['contains_21',['contains',['../class_triangle.html#a5297b799b8f7d17c80d295a459717f41',1,'Triangle::contains(Vector2D &amp;point)'],['../class_triangle.html#a56db071c52eb92f00c628cee626f3f9c',1,'Triangle::contains(const Vector2D &amp;M) const']]],
+  ['currentcolor_22',['currentColor',['../class_my_polygon.html#ab153cb2f23f6cb09aeb8cbcc4e8218fe',1,'MyPolygon']]]
+];
