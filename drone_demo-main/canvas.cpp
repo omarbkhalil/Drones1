@@ -11,18 +11,26 @@
 
 Canvas::Canvas(QWidget *parent)
     : QWidget(parent),
-    myPolygon(100)
+    myPolygon(100),
+    voronoi(nullptr)
 {
     droneImg.load("../../media/drone.png");
     setMouseTracking(true);
     showTriangles = true; // Ensure triangles are shown by default
     showDelaunay = false; // Delaunay is optional
     showCenters = false;  // Show centers only when toggled
+
+
+
 }
 
 Canvas::~Canvas()
 {
     clear();
+    if (voronoi) {
+        delete voronoi;
+        voronoi = nullptr;
+    }
 }
 
 void Canvas::clear()
@@ -49,6 +57,14 @@ void Canvas::clear()
     }
 }
 
+void Canvas::initializeVoronoi(const Vector2D& center) {
+    if (!voronoi) {
+        voronoi = new Voronoi(center);  // Create a new Voronoi instance
+    }
+    voronoi->generate(Triangle::triangles);  // Generate edges based on triangles
+    update();  // Trigger repaint
+}
+
 void Canvas::addPoints(const QVector<Vector2D> &tab)
 {
     // Just store them in vertices if you want
@@ -61,57 +77,6 @@ void Canvas::addPoints(const QVector<Vector2D> &tab)
     reScale();
     update();
 }
-
-/*void Canvas::generateTriangles() {
-    // Clear old data
-    triangles.clear();
-    polygons.clear();
-
-    if (vertices.size() < 3) {
-        qDebug() << "Not enough vertices to form a polygon.";
-        return;
-    }
-
-    // Create a new polygon using the vertices
-    MyPolygon* polygon = new MyPolygon(vertices.size());
-    for (const auto& vertex : vertices) {
-        polygon->addVertex(vertex.x, vertex.y);
-    }
-
-    // Ensure the polygon is in counter-clockwise order
-    //polygon->ensureCCW();
-
-    // Retrieve vertices and the count from the polygon
-    int numVertices;
-    Vector2D* polygonVertices = polygon->getVertices(numVertices);
-
-    // Create triangles using the first vertex and every subsequent pair of vertices
-    if (numVertices >= 3) {
-        Vector2D* firstVertex = &polygonVertices[0];
-        for (int i = 1; i < numVertices - 1; ++i) {
-            // Explicitly specify the color to use the first constructor
-            triangles.append(Triangle(firstVertex, &polygonVertices[i], &polygonVertices[i + 1], Qt::yellow));
-        }
-    }
-
-    // Store the polygon for rendering
-    polygons.push_back(polygon);
-
-    // Debug: Log triangle vertices
-    for (const Triangle& tri : triangles) {
-        qDebug() << "Triangle vertices: ("
-                 << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << "), ("
-                 << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << "), ("
-                 << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y << ")";
-    }
-
-    qDebug() << "Triangulation generated.";
-
-    update();
-}
-
-*/
-
 
 
 bool Canvas::checkDelaunay()
@@ -229,6 +194,9 @@ const Vector2D* findOppositePointOfSharedEdge(const Triangle &tri, const Triangl
     return nullptr; // No shared edge or error
 }
 
+QVector<Server*> Canvas::getServers() const {
+    return servers;
+}
 
 /* void Canvas::loadMesh(const QString &filePath)
 {

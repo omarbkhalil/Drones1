@@ -31,6 +31,8 @@ public:
 
     explicit Canvas(QWidget *parent = nullptr);
     ~Canvas();
+    void initializeVoronoi(const Vector2D& center);  // New method for initializing Voronoi
+
 
     void setMap(QMap<QString, Drone *> *map) { mapDrones = map; }
     // void setServerPositions(const QVector<Vector2D> &positions) { serverPositions = positions; }
@@ -69,6 +71,8 @@ public:
     QMap<QPair<const Vector2D*, const Vector2D*>, QVector<const Triangle*>> mapEdgesToTriangles(); ///< Map edges to neighboring triangles
     QVector<QLineF> generateVoronoiEdges(); ///< Generate Voronoi edges
     QMap<Server*, QVector<QLineF>> generateVoronoiCells(); ///< Generate Vor
+    QVector<Server*> getServers() const;  // Getter for servers
+
 signals:
     void updateSB(QString s);
 
@@ -93,7 +97,7 @@ private:
     QImage droneImg;
     float scale = 1.0f;
     Vector2D origin;
-    Voronoi* voronoi;
+   Voronoi* voronoi;
     bool handleTriangleClick(const Vector2D &clickPosition); ///< Handles triangle flipping on click
     void handleDroneClick(const QPoint &screenPos);
 };
