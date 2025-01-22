@@ -228,10 +228,10 @@ ui->widget->showCircles=checked;
 }
 void MainWindow::on_actionshowDelaunay_triggered(bool checked)
 {
-    qDebug()<<"Callin00t";
 
     // Toggle the boolean in the Canvas
-    ui->widget->checkDelaunay();
+   ui->widget->checkDelaunay();
+
 
     ui->widget->update();
 }

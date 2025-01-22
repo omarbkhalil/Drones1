@@ -54,11 +54,10 @@ bool Triangle::isInside(const Vector2D &P)
 
 
 //-------------------------------------
-bool Triangle::hasEdge(Vector2D A, Vector2D B) const
-{
-    return (A == ptr[0] && B == ptr[1]) ||
-           (A == ptr[1] && B == ptr[2]) ||
-           (A == ptr[2] && B == ptr[0]);
+bool Triangle::hasEdge(Vector2D A, Vector2D B) const {
+    return (A == *ptr[0] && B == *ptr[1]) || (A == *ptr[1] && B == *ptr[2]) ||
+           (A == *ptr[2] && B == *ptr[0]) || (B == *ptr[0] && A == *ptr[1]) ||
+           (B == *ptr[1] && A == *ptr[2]) || (B == *ptr[2] && A == *ptr[0]);
 }
 
 //-------------------------------------
@@ -312,67 +311,56 @@ bool Triangle:: checkDelaunay(const QVector<Vector2D> &tabVertices) {
 
 
 }
+Vector2D* Triangle::getOpposite(const QVector<const Vector2D*>& commonEdges) const {
+    for (int i = 0; i < 3; ++i) {
+        if (ptr[i] != commonEdges[0] && ptr[i] != commonEdges[1]) {
+            return ptr[i];  // Return the vertex that is not part of the common edge
+        }
+    }
+    qDebug() << "Error: No opposite point found for the given common edge!";
+    return nullptr;
+}
 
-void Triangle::flippIt(QVector<Triangle> triangles) {
+void Triangle::flippIt(QVector<Triangle>& triangles) {
     QVector<const Vector2D*> commonEdges;
-    qDebug() << "OPPOSITE : " << (this->getOpposite());
 
-    bool flipCompleted = false; // Flag to control when the flip is done
-    int i = 0;
-    int edgeIndex = 0;
+    for (Triangle& tri : triangles) {
+        if (&tri == this) continue;
 
-    // Iterate over all neighboring triangles using while loop
-    while (i < triangles.size() && !flipCompleted) {
-        Triangle tri = triangles[i];
-
-        // Check if triangle meets flippable criteria
-        if (tri.isFlippable() && &tri != this && tri.contains(this->getOpposite())){
-            // Check each of the 3 edges to find a common edge
-
-            // Use nested while loop to check edges
-            while (edgeIndex < 3 && !flipCompleted) {
-                if (edgeIndex == 0 && tri.hasEdge(this->getVertexPtr(1), this->getVertexPtr(0))) {
-                    // Common edge is (1, 0)
-                    commonEdges = {getVertexPtr(1), getVertexPtr(0)};
-                } else if (edgeIndex == 1 && tri.hasEdge(getVertexPtr(2), getVertexPtr(1))) {
-                    // Common edge is (2, 1)
-                    commonEdges = {getVertexPtr(2), getVertexPtr(1)};
-                } else if (edgeIndex == 2 && tri.hasEdge(getVertexPtr(0), getVertexPtr(2))) {
-                    // Common edge is (0, 2)
-                    commonEdges = {getVertexPtr(0), getVertexPtr(2)};
-                }
-
-                // If a common edge is found, perform the flip
-                if (!commonEdges.isEmpty()) {
-                    this->updateVertices(
-                        this->getOpposite(),
-                        const_cast<Vector2D*>(commonEdges[0]),
-                        tri.getOpposite()
-                        );
-
-                    tri.updateVertices(
-                        tri.getOpposite(),
-                        const_cast<Vector2D*>(commonEdges[1]),
-                        this->getOpposite()
-                        );
-
-                    this->computeCircle();
-                    tri.computeCircle();
-                    flipCompleted = true; // Set flag to indicate flip is done
-                }
-
-                edgeIndex++;
+        // Find common edge
+        commonEdges.clear();
+        for (int i = 0; i < 3; ++i) {
+            if (tri.hasEdge(*this->getVertexPtr(i), *this->getVertexPtr((i + 1) % 3))) {
+                commonEdges.append(this->getVertexPtr(i));
+                commonEdges.append(this->getVertexPtr((i + 1) % 3));
+                break;
             }
         }
 
-        i++;
+        if (commonEdges.size() == 2) {
+            Vector2D* thisOpposite = this->getOpposite(commonEdges);
+            Vector2D* triOpposite = tri.getOpposite(commonEdges);
+
+            if (thisOpposite && triOpposite) {
+                qDebug() << "Performing flip for triangles with opposite points: ("
+                         << thisOpposite->x << "," << thisOpposite->y << ") and ("
+                         << triOpposite->x << "," << triOpposite->y << ")";
+
+                this->updateVertices(thisOpposite, const_cast<Vector2D*>(commonEdges[0]), triOpposite);
+                tri.updateVertices(triOpposite, const_cast<Vector2D*>(commonEdges[1]), thisOpposite);
+
+                this->computeCircle();
+                tri.computeCircle();
+
+                qDebug() << "Flip completed. Updated vertices:";
+                qDebug() << "This triangle: (" << ptr[0]->x << "," << ptr[0]->y << "), ("
+                         << ptr[1]->x << "," << ptr[1]->y << "), (" << ptr[2]->x << "," << ptr[2]->y << ")";
+                return;
+            }
+        }
     }
 
-    // If no flip occurred, still recompute the circle
-    if (!flipCompleted) {
-        this->computeCircle();
-    }
-
-    qDebug() << "FlippIt ended";
+    qDebug() << "No flip performed for this triangle.";
 }
+
 

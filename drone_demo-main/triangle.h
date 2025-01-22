@@ -28,6 +28,7 @@ private:
      */
     Vector2D* flippPoint  = nullptr;
 
+
     /**
      * @brief computeCircle - compute the circum circle from the three vertices.
      * Sets `circumCenter` and `circumRadius`.
@@ -122,10 +123,14 @@ public:
         flippable  = f;
     }
 
-    inline bool isFlippable() const
-    {
+    bool isFlippable() const {
+        qDebug() << "Checking flippable status for triangle: ("
+                 << ptr[0]->x << "," << ptr[0]->y << "), ("
+                 << ptr[1]->x << "," << ptr[1]->y << "), ("
+                 << ptr[2]->x << "," << ptr[2]->y << ")";
         return flippable;
     }
+
 
 
     inline void setOpposite(Vector2D* o)
@@ -138,10 +143,10 @@ public:
         flippPoint = o;
     }
 
-    inline Vector2D* getOpposite()
-    {
-        return flippPoint;
-    }
+
+        Vector2D* getOpposite(const QVector<const Vector2D*>& commonEdges) const;
+
+
     inline void setHighlighted(bool v)
     {
         isHighlited = v;
@@ -184,7 +189,7 @@ public:
     bool hasEdge(Vector2D A, Vector2D B) const;
     bool contains(const Vector2D &M) const;
     bool isOnTheEdge(const Vector2D &P, const Vector2D &A, const Vector2D &B) const ;
-    void flippIt(QVector<Triangle> triangles) ;
+    void flippIt(QVector<Triangle>& triangles);
     /**
      * @brief circleContains
      * @return true if M is inside or on this triangle's circumcircle

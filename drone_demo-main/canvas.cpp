@@ -702,17 +702,38 @@ void Canvas::setPolygon(const MyPolygon& polygon) {
     myPolygon = polygon;
     update();  // Optionally, trigger a repaint whenever a new polygon is set
 }
-void Canvas::flippAll(){
-    while(!checkDelaunay()){
-        auto it  = Triangle::triangles.begin();
-        while( it !=Triangle::triangles.end() && !(*it).isFlippable()){
-            it++;
-        }
-        if(it!=Triangle::triangles.end()){
-            (*it).flippIt(triangles);
 
-        }else{
-            qDebug() << "issue";
+void Canvas::flippAll() {
+    bool anyFlipped = true;
+    int maxIterations = 1000; // Avoid infinite loops
+    int iteration = 0;
+
+    while (anyFlipped && iteration < maxIterations) {
+        anyFlipped = false;
+
+        for (auto& tri : Triangle::triangles) {
+            if (tri.isFlippable()) {
+                qDebug() << "Attempting to flip triangle: ("
+                         << tri.getVertexPtr(0)->x << "," << tri.getVertexPtr(0)->y << "), ("
+                         << tri.getVertexPtr(1)->x << "," << tri.getVertexPtr(1)->y << "), ("
+                         << tri.getVertexPtr(2)->x << "," << tri.getVertexPtr(2)->y << ")";
+
+                tri.flippIt(Triangle::triangles);
+                anyFlipped = true;
+                break; // Restart loop after a flip
+            }
+        }
+
+        iteration++;
+        if (!anyFlipped) {
+            qDebug() << "No more flippable triangles found.";
         }
     }
+
+    if (iteration >= maxIterations) {
+        qDebug() << "Max iterations reached. Stopping flipping process.";
+    }
+
+    checkDelaunay(); // Recheck Delaunay condition after all flips
 }
+
